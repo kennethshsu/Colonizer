@@ -38,31 +38,31 @@ print(selectedGameBoard)
 hexTiles = pd.DataFrame(
     [
         # Row 1
-        [selectedGameBoard.iloc[0, 1], -2, -4, 0],
-        [selectedGameBoard.iloc[0, 2], 0, -4, 0],
-        [selectedGameBoard.iloc[0, 3], 2, -4, 0],
+        [selectedGameBoard.iloc[0, 1], -2, -4, 3, 0],
+        [selectedGameBoard.iloc[0, 2], 0, -4, 3, 0],
+        [selectedGameBoard.iloc[0, 3], 2, -4, 3, 0],
         # Row 2
-        [selectedGameBoard.iloc[0, 4], -3, -2, 0],
-        [selectedGameBoard.iloc[0, 5], -1, -2, 0],
-        [selectedGameBoard.iloc[0, 6], 1, -2, 0],
-        [selectedGameBoard.iloc[0, 7], 3, -2, 0],
+        [selectedGameBoard.iloc[0, 4], -3, -2, 3, 0],
+        [selectedGameBoard.iloc[0, 5], -1, -2, 2, 0],
+        [selectedGameBoard.iloc[0, 6], 1, -2, 2, 0],
+        [selectedGameBoard.iloc[0, 7], 3, -2, 3, 0],
         # Row 3
-        [selectedGameBoard.iloc[0, 8], -4, 0, 0],
-        [selectedGameBoard.iloc[0, 9], -2, 0, 0],
-        [selectedGameBoard.iloc[0, 10], 0, 0, 0],
-        [selectedGameBoard.iloc[0, 11], 2, 0, 0],           
-        [selectedGameBoard.iloc[0, 12], 4, 0, 0],
+        [selectedGameBoard.iloc[0, 8], -4, 0, 3, 0],
+        [selectedGameBoard.iloc[0, 9], -2, 0, 2, 0],
+        [selectedGameBoard.iloc[0, 10], 0, 0, 1, 0],
+        [selectedGameBoard.iloc[0, 11], 2, 0, 2, 0],           
+        [selectedGameBoard.iloc[0, 12], 4, 0, 3, 0],
         # Row 4
-        [selectedGameBoard.iloc[0, 13], -3, 2, 0],
-        [selectedGameBoard.iloc[0, 14], -1, 2, 0],
-        [selectedGameBoard.iloc[0, 15], 1, 2, 0],
-        [selectedGameBoard.iloc[0, 16], 3, 2, 0],
+        [selectedGameBoard.iloc[0, 13], -3, 2, 3, 0],
+        [selectedGameBoard.iloc[0, 14], -1, 2, 2, 0],
+        [selectedGameBoard.iloc[0, 15], 1, 2, 2, 0],
+        [selectedGameBoard.iloc[0, 16], 3, 2, 3, 0],
         # Row 5
-        [selectedGameBoard.iloc[0, 17], -2, 4, 0],
-        [selectedGameBoard.iloc[0, 18], 0, 4, 0],
-        [selectedGameBoard.iloc[0, 19], 2, 4, 0], 
+        [selectedGameBoard.iloc[0, 17], -2, 4, 3, 0],
+        [selectedGameBoard.iloc[0, 18], 0, 4, 3, 0],
+        [selectedGameBoard.iloc[0, 19], 2, 4, 3, 0], 
     ],
-    columns = ['hexResource', 'xHexOffset', 'yHexOffset', 'diceNumber']
+    columns = ['hexResource', 'xHexOffset', 'yHexOffset', 'ring', 'diceNumber']
 )
 
 # Ports
@@ -103,7 +103,51 @@ for index, row in diceAssignmentOrder.iterrows():
         diceCounter += 1
     else:
         hexTiles.loc[(hexTiles['xHexOffset'] == row['xHexOffset']) & (hexTiles['yHexOffset'] == row['yHexOffset']), 'diceNumber'] = 0
-        
+
+#%% Hex coordinates by ring
+HexOrder = pd.DataFrame(
+    [
+        # Inner ring, 1 hex
+        [1, 0, 0],
+        # Center ring, 6 hexes
+        [2, 1, -2],
+        [2, 2, 0],
+        [2, 1, 2],
+        [2, -1, 2],
+        [2, -2, 0],
+        [2, -1, -2],
+        # Outer ring, 12 hexes
+        [3, 0, -4],
+        [3, 2, -4],
+        [3, 3, -2],
+        [3, 4, 0],
+        [3, 3, 2],
+        [3, 2, 4],
+        [3, 0, 4],
+        [3, -2, 4],
+        [3, -3, 2],
+        [3, -4, 0],
+        [3, -3, -2],
+        [3, -2, -4]
+    ],
+    columns = ['Ring', 'xHexOffset', 'yHexOffset']
+)
+
+#%% Init empty settlement/city spaces
+buildingLocationArray = []
+buildingNumber = 1
+ringSize = [6, 18, 30] # The inner ring has 6 buildable locations, center ring has 18, outer ring has 30
+
+for ring in range(3):
+    for buildingInRing in range(ringSize[ring]):
+        buildingLocationArray.append([buildingNumber, ring + 1, buildingInRing + 1])
+        buildingNumber += 1
+
+buildingLocation = pd.DataFrame(buildingLocationArray, columns = ['BuildingNum', 'Ring', 'RingBuildingNum'])
+
+print(buildingLocation)
+## need to start the (up to) three buildings assgnment
+
 #%%
 def BoardModule():
     
