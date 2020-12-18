@@ -1,5 +1,4 @@
 import numpy as np
-import os
 import pandas as pd
 from tkinter import *
 
@@ -12,6 +11,11 @@ xBoardCenter = 450
 yBoardCenter = 450
 radius = 60
 gapSize = 5
+
+colonizer = Tk()
+colonizer.title = 'Colonizer'
+colonizer.canvas = Canvas(width = gameWindowWidth, height = gameWindowHeight)
+colonizer.canvas.pack()
 
 #%%
 # Resrouce color dictionary
@@ -132,6 +136,7 @@ HexOrder = pd.DataFrame(
     ],
     columns = ['Ring', 'xHexOffset', 'yHexOffset']
 )
+print(HexOrder.iloc[0][1])
 
 #%% Init empty settlement/city spaces
 buildingLocationArray = []
@@ -145,8 +150,33 @@ for ring in range(3):
 
 buildingLocation = pd.DataFrame(buildingLocationArray, columns = ['BuildingNum', 'Ring', 'RingBuildingNum'])
 
-print(buildingLocation)
+# print(buildingLocation)
 ## need to start the (up to) three buildings assgnment
+
+# Inner ring buildings
+print(ringSize[1])
+for index, row in buildingLocation.iterrows():
+    if row['Ring'] == 1:
+        buildingLocation.at[index, 'Hex1_X'] = HexOrder.iloc[0][1]
+        buildingLocation.at[index, 'Hex1_Y'] = HexOrder.iloc[0][2]
+        buildingLocation.at[index, 'Hex2_X'] = HexOrder[HexOrder['Ring'] == 2].iloc[(row['RingBuildingNum'] - 1) % 6]['xHexOffset']
+        buildingLocation.at[index, 'Hex2_Y'] = HexOrder[HexOrder['Ring'] == 2].iloc[(row['RingBuildingNum'] - 1) % 6]['yHexOffset']
+        buildingLocation.at[index, 'Hex3_X'] = HexOrder[HexOrder['Ring'] == 2].iloc[(row['RingBuildingNum']) % 6]['xHexOffset']
+        buildingLocation.at[index, 'Hex3_Y'] = HexOrder[HexOrder['Ring'] == 2].iloc[(row['RingBuildingNum']) % 6]['yHexOffset']
+        
+    if row['Ring'] == 2:
+        # These buildings have 2 hexes from the center ring, and 1 from the outer ring
+        if row['RingBuildingNum'] % 3 == 1:
+            buildingLocation.at[index, 'Hex1_X'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round(row['RingBuildingNum']/3) - 1) % 6]['xHexOffset']
+            buildingLocation.at[index, 'Hex1_Y'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round(row['RingBuildingNum']/3) - 1) % 6]['yHexOffset']
+            buildingLocation.at[index, 'Hex2_X'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round(row['RingBuildingNum']/3)) % 6]['xHexOffset']
+            buildingLocation.at[index, 'Hex2_Y'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round(row['RingBuildingNum']/3)) % 6]['yHexOffset']
+            buildingLocation.at[index, 'Hex3_X'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round(row['RingBuildingNum']/3)) * 2]['xHexOffset']
+            buildingLocation.at[index, 'Hex3_Y'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round(row['RingBuildingNum']/3)) * 2]['yHexOffset']            
+        
+    
+print(buildingLocation[['RingBuildingNum', 'Hex1_X', 'Hex1_Y', 'Hex2_X', 'Hex2_Y', 'Hex3_X', 'Hex3_Y']])
+# print(buildingLocation)
 
 #%%
 def BoardModule():
@@ -251,11 +281,6 @@ def BoardModule():
         
         
 #%%        
-colonizer = Tk()
-colonizer.title = 'Colonizer'
-colonizer.canvas = Canvas(width = gameWindowWidth, height = gameWindowHeight)
-colonizer.canvas.pack()
-
 BoardModule()
 colonizer.mainloop()
 
