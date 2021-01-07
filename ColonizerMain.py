@@ -159,33 +159,45 @@ for index, row in buildingLocation.iterrows():
     if row['Ring'] == 1:
         buildingLocation.at[index, 'Hex1_X'] = HexOrder.iloc[0][1]
         buildingLocation.at[index, 'Hex1_Y'] = HexOrder.iloc[0][2]
-        buildingLocation.at[index, 'Hex2_X'] = HexOrder[HexOrder['Ring'] == 2].iloc[(row['RingBuildingNum'] - 1) % 6]['xHexOffset']
-        buildingLocation.at[index, 'Hex2_Y'] = HexOrder[HexOrder['Ring'] == 2].iloc[(row['RingBuildingNum'] - 1) % 6]['yHexOffset']
-        buildingLocation.at[index, 'Hex3_X'] = HexOrder[HexOrder['Ring'] == 2].iloc[(row['RingBuildingNum']) % 6]['xHexOffset']
-        buildingLocation.at[index, 'Hex3_Y'] = HexOrder[HexOrder['Ring'] == 2].iloc[(row['RingBuildingNum']) % 6]['yHexOffset']
+        buildingLocation.at[index, 'Hex2_X'] = HexOrder[HexOrder['Ring'] == 2].iloc[(row['RingBuildingNum']-1)%6-1]['xHexOffset']
+        buildingLocation.at[index, 'Hex2_Y'] = HexOrder[HexOrder['Ring'] == 2].iloc[(row['RingBuildingNum']-1)%6-1]['yHexOffset']
+        buildingLocation.at[index, 'Hex3_X'] = HexOrder[HexOrder['Ring'] == 2].iloc[(row['RingBuildingNum'])%6-1]['xHexOffset']
+        buildingLocation.at[index, 'Hex3_Y'] = HexOrder[HexOrder['Ring'] == 2].iloc[(row['RingBuildingNum'])%6-1]['yHexOffset']
         
     if row['Ring'] == 2:
         # These buildings have 2 hexes from the center ring, and 1 from the outer ring
         if row['RingBuildingNum'] % 3 == 1:
-            buildingLocation.at[index, 'Hex1_X'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round(row['RingBuildingNum']/3) - 1) % 6]['xHexOffset']
-            buildingLocation.at[index, 'Hex1_Y'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round(row['RingBuildingNum']/3) - 1) % 6]['yHexOffset']
-            buildingLocation.at[index, 'Hex2_X'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round(row['RingBuildingNum']/3)) % 6]['xHexOffset']
-            buildingLocation.at[index, 'Hex2_Y'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round(row['RingBuildingNum']/3)) % 6]['yHexOffset']
-            buildingLocation.at[index, 'Hex3_X'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round(row['RingBuildingNum']/3)) * 2]['xHexOffset']
-            buildingLocation.at[index, 'Hex3_Y'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round(row['RingBuildingNum']/3)) * 2]['yHexOffset']            
-        
-    
+            buildingLocation.at[index, 'Hex1_X'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round(row['RingBuildingNum']/3)-1)%6]['xHexOffset']
+            buildingLocation.at[index, 'Hex1_Y'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round(row['RingBuildingNum']/3)-1)%6]['yHexOffset']
+            buildingLocation.at[index, 'Hex2_X'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round(row['RingBuildingNum']/3))%6]['xHexOffset']
+            buildingLocation.at[index, 'Hex2_Y'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round(row['RingBuildingNum']/3))%6]['yHexOffset']
+            buildingLocation.at[index, 'Hex3_X'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round(row['RingBuildingNum']/3))*2]['xHexOffset']
+            buildingLocation.at[index, 'Hex3_Y'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round(row['RingBuildingNum']/3))*2]['yHexOffset']
+        elif row['RingBuildingNum'] % 3 == 2:
+            buildingLocation.at[index, 'Hex1_X'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round((row['RingBuildingNum']-1)/3))*2]['xHexOffset']
+            buildingLocation.at[index, 'Hex1_Y'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round((row['RingBuildingNum']-1)/3))*2]['yHexOffset']
+            buildingLocation.at[index, 'Hex2_X'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round((row['RingBuildingNum']-1)/3))%6]['xHexOffset']
+            buildingLocation.at[index, 'Hex2_Y'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round((row['RingBuildingNum']-1)/3))%6]['yHexOffset']
+            buildingLocation.at[index, 'Hex3_X'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round((row['RingBuildingNum']-1)/3))*2+1]['xHexOffset']
+            buildingLocation.at[index, 'Hex3_Y'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round((row['RingBuildingNum']-1)/3))*2+1]['yHexOffset']
+        elif row['RingBuildingNum'] % 3 == 0:
+            buildingLocation.at[index, 'Hex1_X'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round((row['RingBuildingNum'])/3*2)-1)]['xHexOffset']
+            buildingLocation.at[index, 'Hex1_Y'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round((row['RingBuildingNum'])/3*2)-1)]['yHexOffset']
+            buildingLocation.at[index, 'Hex2_X'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round((row['RingBuildingNum']-1)/3))%6-1]['xHexOffset']
+            buildingLocation.at[index, 'Hex2_Y'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round((row['RingBuildingNum']-1)/3))%6-1]['yHexOffset']
+            buildingLocation.at[index, 'Hex3_X'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round((row['RingBuildingNum'])/3*2)%12)]['xHexOffset']
+            buildingLocation.at[index, 'Hex3_Y'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round((row['RingBuildingNum'])/3*2)%12)]['yHexOffset']    
+
 print(buildingLocation[['RingBuildingNum', 'Hex1_X', 'Hex1_Y', 'Hex2_X', 'Hex2_Y', 'Hex3_X', 'Hex3_Y']])
 # print(buildingLocation)
 
 #%%
 def BoardModule():
-    
     def loadHex(hexResource, xHexOffset, yHexOffset, diceNumber):
         # Calculate the center of each hex tile
         xHexCenter = xBoardCenter + np.sqrt(3)/2 * radius * xHexOffset + gapSize * xHexOffset
         yHexCenter = yBoardCenter + 3/4 * radius * yHexOffset + gapSize * yHexOffset
-        
+    
         # Coordinates of the 6 points of the hex
         points = [
             xHexCenter + np.sqrt(3)/2 * radius, yHexCenter - radius/2,
@@ -278,6 +290,20 @@ def BoardModule():
     # Setting up ports
     for index, row in portTiles.iterrows():
         loadPort(row['portType'], row['xHexOffset'], row['yHexOffset'], row['portDirection'],)
+        
+    # Setting up buildings
+    for index, row in buildingLocation.iterrows():
+        # Calculate the center of each hex tile
+        xOffset = (row['Hex1_X'] + row['Hex2_X'] + row['Hex3_X'])/3
+        yOffset = (row['Hex1_Y'] + row['Hex2_Y'] + row['Hex3_Y'])/3
+        xCenter = xBoardCenter + np.sqrt(3)/2 * radius * xOffset + gapSize * xOffset
+        yCenter = yBoardCenter + 3/4 * radius * yOffset + gapSize * yOffset
+        colonizer.canvas.create_text(
+            xCenter, 
+            yCenter, 
+            text = "B:" + str(int(row['BuildingNum'])),
+            font = ('Helvetica', 8)
+        )
         
         
 #%%        
