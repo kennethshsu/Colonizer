@@ -33,7 +33,6 @@ gameBoards = pd.read_excel('./GameBoards.xlsx')
 
 # Select which game board to load, gameID is selected above
 selectedGameBoard = gameBoards[gameBoards['Game'] == gameID]
-print(selectedGameBoard)
 
 # We can add code here to make sure that the board is a valid board (e.g. 4 woods, 3 bricks, ..., 1 wood port, 1 brick port, etc)
 
@@ -132,11 +131,29 @@ HexOrder = pd.DataFrame(
         [3, -3, 2],
         [3, -4, 0],
         [3, -3, -2],
-        [3, -2, -4]
+        [3, -2, -4],
+        # Helper ring, 18 hexes
+        [4, 1, -6],
+        [4, 3, -6],
+        [4, 4, -4],
+        [4, 5, -2],
+        [4, 6, 0],
+        [4, 5, 2],
+        [4, 4, 4],
+        [4, 3, 6],
+        [4, 1, 6],
+        [4, -1, 6],
+        [4, -3, 6],
+        [4, -4, 4],
+        [4, -5, 2],
+        [4, -6, 0],
+        [4, -5, 2],
+        [4, -4, 4],
+        [4, -3, 6],
+        [4, -1, 6]
     ],
     columns = ['Ring', 'xHexOffset', 'yHexOffset']
 )
-print(HexOrder.iloc[0][1])
 
 #%% Init empty settlement/city spaces
 buildingLocationArray = []
@@ -164,7 +181,7 @@ for index, row in buildingLocation.iterrows():
         buildingLocation.at[index, 'Hex3_X'] = HexOrder[HexOrder['Ring'] == 2].iloc[(row['RingBuildingNum'])%6-1]['xHexOffset']
         buildingLocation.at[index, 'Hex3_Y'] = HexOrder[HexOrder['Ring'] == 2].iloc[(row['RingBuildingNum'])%6-1]['yHexOffset']
         
-    if row['Ring'] == 2:
+    elif row['Ring'] == 2:
         # These buildings have 2 hexes from the center ring, and 1 from the outer ring
         if row['RingBuildingNum'] % 3 == 1:
             buildingLocation.at[index, 'Hex1_X'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round(row['RingBuildingNum']/3)-1)%6]['xHexOffset']
@@ -187,7 +204,12 @@ for index, row in buildingLocation.iterrows():
             buildingLocation.at[index, 'Hex2_Y'] = HexOrder[HexOrder['Ring'] == 2].iloc[(round((row['RingBuildingNum']-1)/3))%6-1]['yHexOffset']
             buildingLocation.at[index, 'Hex3_X'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round((row['RingBuildingNum'])/3*2)%12)]['xHexOffset']
             buildingLocation.at[index, 'Hex3_Y'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round((row['RingBuildingNum'])/3*2)%12)]['yHexOffset']    
-
+    
+    elif row['Ring'] == 3:
+        if row['RingBuildingNum'] % 5 == 1:
+            buildingLocation.at[index, 'Hex1_X'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round((row['RingBuildingNum']-1)/5*2))]['xHexOffset']
+            buildingLocation.at[index, 'Hex1_Y'] = HexOrder[HexOrder['Ring'] == 3].iloc[(round((row['RingBuildingNum']-1)/5*2))]['yHexOffset']
+            
 print(buildingLocation[['RingBuildingNum', 'Hex1_X', 'Hex1_Y', 'Hex2_X', 'Hex2_Y', 'Hex3_X', 'Hex3_Y']])
 # print(buildingLocation)
 
