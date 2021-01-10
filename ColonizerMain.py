@@ -3,7 +3,7 @@ import pandas as pd
 import tkinter as tk
 
 #%%
-gameID = 2
+gameID = 1
 
 gameWindowWidth = 1200
 gameWindowHeight = 9000
@@ -132,6 +132,7 @@ for index, row in diceAssignmentOrder.iterrows():
             & (hexTiles['yHexOffset'] == row['yHexOffset']), 'diceNumber'
         ] = 0
 
+
 #%% Hex coordinates by ring
 HexOrder = pd.DataFrame(
     [
@@ -195,9 +196,6 @@ for ring in range(3):
 buildingLocation = pd.DataFrame(
     buildingLocationArray, 
     columns = ['BuildingNum', 'Ring', 'RingBuildingNum'])
-
-# print(buildingLocation)
-## need to start the (up to) three buildings assgnment
 
 for index, row in buildingLocation.iterrows():
 
@@ -363,207 +361,260 @@ for index, row in buildingLocation.iterrows():
                 HexOrder['Ring'] == 4].iloc[
                     round(row['RingBuildingNum']/5*3-1)%18
                 ]['yHexOffset']
+                    
+# Calculate the value of each building location
+resourceEconValue = {
+    'wood': 0,
+    'brick': 0,
+    'sheep': 0,
+    'wheat': 0,
+    'rock': 0
+}
 
+# Calcuate the scarcity of each resource
+for index, row in hexTiles.iterrows():
+    if row['hexResource'] == "wood":
+        resourceEconValue['wood'] += diceProb[row['diceNumber']]
+    elif row['hexResource'] == "brick":
+        resourceEconValue['brick'] += diceProb[row['diceNumber']]
+    elif row['hexResource'] == "sheep":
+        resourceEconValue['sheep'] += diceProb[row['diceNumber']]
+    elif row['hexResource'] == "wheat":
+        resourceEconValue['wheat'] += diceProb[row['diceNumber']]
+    elif row['hexResource'] == "rock":
+        resourceEconValue['rock'] += diceProb[row['diceNumber']]
 
-#%%
-def BoardModule():
+for index, row in buildingLocation.iterrows():
+    buildingLocValue = 0
     
-    def createCircle(x, y, r, label, color):
-        x0 = x - r
-        y0 = y - r
-        x1 = x + r
-        y1 = y + r
-        colonizer.canvas.create_oval(x0, y0, x1, y1, fill = color)
-        colonizer.canvas.create_text(
-            xCenter, 
-            yCenter, 
-            text = label,
-            font = ('Helvetica', 12)
-        )
-
-    def loadHex(hexResource, xHexOffset, yHexOffset, diceNumber):
-        # Calculate the center of each hex tile
-        xHexCenter = (
-            xBoardCenter + np.sqrt(3)/2 * radius * xHexOffset 
-            + gapSize * xHexOffset
-        )
-        yHexCenter = (
-            yBoardCenter + 3/4 * radius * yHexOffset 
-            + gapSize * yHexOffset
-        )
-    
-        # Coordinates of the 6 points of the hex
-        points = [
-            xHexCenter + np.sqrt(3)/2 * radius, yHexCenter - radius/2,
-            xHexCenter + 0, yHexCenter - radius,
-            xHexCenter - np.sqrt(3)/2 * radius, yHexCenter - radius/2,
-            xHexCenter - np.sqrt(3)/2 * radius, yHexCenter + radius/2,
-            xHexCenter + 0, yHexCenter + radius,
-            xHexCenter + np.sqrt(3)/2 * radius, yHexCenter + radius/2
+    for hexes in [1, 2, 3]:
+        currentTile = hexTiles[
+            (hexTiles['xHexOffset'] == row["Hex"+str(hexes)+"_X"]) 
+            & (hexTiles['yHexOffset'] == row["Hex"+str(hexes)+"_Y"])
         ]
-        colonizer.canvas.create_polygon(points,
-            outline = '#000000',
-            fill = resourceColor[hexResource],
-            width = 2
-        )
-        
-        # This is the dice roll number
-        if diceNumber > 1:
-            colonizer.canvas.create_text(
-                xHexCenter, 
-                yHexCenter, 
-                text = str(diceNumber),
-                font = ('Helvetica', 30)
+
+        if currentTile.empty:
+            buildingLocValue += 0
+        elif currentTile.iloc[0]['hexResource'] == 'desert':
+            buildingLocValue += 0
+        else:
+            currentTileProb = diceProb[
+                currentTile.iloc[0]['diceNumber']
+            ]
+            buildingLocValue += (
+                resourceEconValue[currentTile.iloc[0]['hexResource']] * currentTileProb
             )
-        
-        # This is the hex location coordinates
+    buildingLocation.at[index, 'LocValue'] = buildingLocValue
+
+# print(buildingLocation)
+#%%   
+def printBuilding(x, y, r, label, color):
+    x0 = x - r
+    y0 = y - r
+    x1 = x + r
+    y1 = y + r
+    colonizer.canvas.create_oval(x0, y0, x1, y1, fill = color)
+    colonizer.canvas.create_text(
+        xCenter, 
+        yCenter, 
+        text = label,
+        font = ('Helvetica', 9)
+    )
+
+def loadHex(hexResource, xHexOffset, yHexOffset, diceNumber):
+    # Calculate the center of each hex tile
+    xHexCenter = (
+        xBoardCenter + np.sqrt(3)/2 * radius * xHexOffset 
+        + gapSize * xHexOffset
+    )
+    yHexCenter = (
+        yBoardCenter + 3/4 * radius * yHexOffset 
+        + gapSize * yHexOffset
+    )
+
+    # Coordinates of the 6 points of the hex
+    points = [
+        xHexCenter + np.sqrt(3)/2 * radius, yHexCenter - radius/2,
+        xHexCenter + 0, yHexCenter - radius,
+        xHexCenter - np.sqrt(3)/2 * radius, yHexCenter - radius/2,
+        xHexCenter - np.sqrt(3)/2 * radius, yHexCenter + radius/2,
+        xHexCenter + 0, yHexCenter + radius,
+        xHexCenter + np.sqrt(3)/2 * radius, yHexCenter + radius/2
+    ]
+    colonizer.canvas.create_polygon(points,
+        outline = '#000000',
+        fill = resourceColor[hexResource],
+        width = 2
+    )
+    
+    # This is the dice roll number
+    if diceNumber > 1:
         colonizer.canvas.create_text(
             xHexCenter, 
-            yHexCenter + radius/4, 
-            text = "(" + str(xHexOffset) + ", " + str(yHexOffset) + ")",
-            font = ('Helvetica', 8)
+            yHexCenter, 
+            text = str(diceNumber),
+            font = ('Helvetica', 30)
         )
-        
-    def loadPort(portType, xHexOffset, yHexOffset, portDirection):
-        # Calculate the center of each hex tile
-        xHexCenter = (
-            xBoardCenter + np.sqrt(3)/2 * radius * xHexOffset 
-            + gapSize * xHexOffset
-        )
-        yHexCenter = (
-            yBoardCenter + 3/4 * radius * yHexOffset 
-            + gapSize * yHexOffset
-        )
-        
-        if portDirection == 'E':
-            points = [
-                xHexCenter + np.sqrt(3)/2 * radius + gapSize*2, 
-                yHexCenter - radius/2 ,
-                xHexCenter + np.sqrt(3)/2 * radius + gapSize*2, 
-                yHexCenter + radius/2,
-                xHexCenter + np.sqrt(3)/2 * radius + np.sqrt(3)/2 * radius + gapSize*2,
-                yHexCenter + 0
-            ]
-        elif portDirection == 'SE':
-            points = [
-                xHexCenter + 0 + gapSize, 
-                yHexCenter + radius + np.sqrt(3)*gapSize,
-                xHexCenter + np.sqrt(3)/2 * radius + gapSize, 
-                yHexCenter + radius/2 + np.sqrt(3)*gapSize,
-                xHexCenter + np.sqrt(3)/2 * radius + gapSize, 
-                yHexCenter + radius/2 + radius + np.sqrt(3)*gapSize
-            ]
-        elif portDirection == 'SW':
-            points = [
-                xHexCenter - 0 - gapSize, 
-                yHexCenter + radius + np.sqrt(3)*gapSize,
-                xHexCenter - np.sqrt(3)/2 * radius - gapSize, 
-                yHexCenter + radius/2 + np.sqrt(3)*gapSize,
-                xHexCenter - np.sqrt(3)/2 * radius - gapSize, 
-                yHexCenter + radius/2 + radius + np.sqrt(3)*gapSize
-            ]
-        elif portDirection == 'W':
-            points = [
-                xHexCenter - np.sqrt(3)/2 * radius - gapSize*2, 
-                yHexCenter - radius/2,
-                xHexCenter - np.sqrt(3)/2 * radius - gapSize*2, 
-                yHexCenter + radius/2,
-                xHexCenter - np.sqrt(3)/2 * radius - np.sqrt(3)/2 * radius - gapSize*2, 
-                yHexCenter + 0
-            ]
-        elif portDirection == 'NW':
-            points = [
-                xHexCenter - 0 - gapSize, 
-                yHexCenter - radius - np.sqrt(3)*gapSize,
-                xHexCenter - np.sqrt(3)/2 * radius - gapSize, 
-                yHexCenter - radius/2 - np.sqrt(3)*gapSize,
-                xHexCenter - np.sqrt(3)/2 * radius - gapSize, 
-                yHexCenter - radius/2 - radius - np.sqrt(3)*gapSize
-            ]
-        elif portDirection == "NE":
-            points = [
-                xHexCenter + 0 + gapSize, 
-                yHexCenter - radius - np.sqrt(3)*gapSize,
-                xHexCenter + np.sqrt(3)/2 * radius + gapSize, 
-                yHexCenter - radius/2 - np.sqrt(3)*gapSize,
-                xHexCenter + np.sqrt(3)/2 * radius + gapSize, 
-                yHexCenter - radius/2 - radius - np.sqrt(3)*gapSize
-            ]
-        colonizer.canvas.create_polygon(points,
-            outline = '#000000',
-            fill = resourceColor[portType],
-            width = 2)
     
-    # Print game ID
+    # This is the hex location coordinates
     colonizer.canvas.create_text(
-            10, 
-            10,  
-            text = "Game ID: " + str(gameID),
-            font = ('Helvetica', 20),
-            anchor="nw"
-        )
-        
-    # Setting up hex by hex, row by row from upper left tile
-    for index, row in hexTiles.iterrows():
-        loadHex(
-            row['hexResource'], 
-            row['xHexOffset'], 
-            row['yHexOffset'], 
-            row['diceNumber']
-        )
+        xHexCenter, 
+        yHexCenter + radius/4, 
+        text = "(" + str(xHexOffset) + ", " + str(yHexOffset) + ")",
+        font = ('Helvetica', 8)
+    )
     
-    # Setting up ports
-    for index, row in portTiles.iterrows():
-        loadPort(
-            row['portType'],
-            row['xHexOffset'],
-            row['yHexOffset'],
-            row['portDirection'],
-        )
+def loadPort(portType, xHexOffset, yHexOffset, portDirection):
+    # Calculate the center of each hex tile
+    xHexCenter = (
+        xBoardCenter + np.sqrt(3)/2 * radius * xHexOffset 
+        + gapSize * xHexOffset
+    )
+    yHexCenter = (
+        yBoardCenter + 3/4 * radius * yHexOffset 
+        + gapSize * yHexOffset
+    )
     
-    # Setting up buildings
-    for index, row in buildingLocation.iterrows():
-        # Calculate the center of each hex tile
-        xOffset = (row['Hex1_X'] + row['Hex2_X'] + row['Hex3_X'])/3
-        yOffset = (row['Hex1_Y'] + row['Hex2_Y'] + row['Hex3_Y'])/3
-        xCenter = (
-            xBoardCenter + np.sqrt(3)/2 * radius * xOffset 
-            + gapSize * xOffset
-        )
-        yCenter = (
-            yBoardCenter + 3/4 * radius * yOffset + gapSize * yOffset
-        )
-        createCircle(
-            xCenter, 
-            yCenter, 
-            gapSize*2.5,
-            str(int(row['BuildingNum'])),
-            "white"
-        )
+    if portDirection == 'E':
+        points = [
+            xHexCenter + np.sqrt(3)/2 * radius + gapSize*2, 
+            yHexCenter - radius/2 ,
+            xHexCenter + np.sqrt(3)/2 * radius + gapSize*2, 
+            yHexCenter + radius/2,
+            xHexCenter + np.sqrt(3)/2 * radius + np.sqrt(3)/2 * radius + gapSize*2,
+            yHexCenter + 0
+        ]
+    elif portDirection == 'SE':
+        points = [
+            xHexCenter + 0 + gapSize, 
+            yHexCenter + radius + np.sqrt(3)*gapSize,
+            xHexCenter + np.sqrt(3)/2 * radius + gapSize, 
+            yHexCenter + radius/2 + np.sqrt(3)*gapSize,
+            xHexCenter + np.sqrt(3)/2 * radius + gapSize, 
+            yHexCenter + radius/2 + radius + np.sqrt(3)*gapSize
+        ]
+    elif portDirection == 'SW':
+        points = [
+            xHexCenter - 0 - gapSize, 
+            yHexCenter + radius + np.sqrt(3)*gapSize,
+            xHexCenter - np.sqrt(3)/2 * radius - gapSize, 
+            yHexCenter + radius/2 + np.sqrt(3)*gapSize,
+            xHexCenter - np.sqrt(3)/2 * radius - gapSize, 
+            yHexCenter + radius/2 + radius + np.sqrt(3)*gapSize
+        ]
+    elif portDirection == 'W':
+        points = [
+            xHexCenter - np.sqrt(3)/2 * radius - gapSize*2, 
+            yHexCenter - radius/2,
+            xHexCenter - np.sqrt(3)/2 * radius - gapSize*2, 
+            yHexCenter + radius/2,
+            xHexCenter - np.sqrt(3)/2 * radius - np.sqrt(3)/2 * radius - gapSize*2, 
+            yHexCenter + 0
+        ]
+    elif portDirection == 'NW':
+        points = [
+            xHexCenter - 0 - gapSize, 
+            yHexCenter - radius - np.sqrt(3)*gapSize,
+            xHexCenter - np.sqrt(3)/2 * radius - gapSize, 
+            yHexCenter - radius/2 - np.sqrt(3)*gapSize,
+            xHexCenter - np.sqrt(3)/2 * radius - gapSize, 
+            yHexCenter - radius/2 - radius - np.sqrt(3)*gapSize
+        ]
+    elif portDirection == "NE":
+        points = [
+            xHexCenter + 0 + gapSize, 
+            yHexCenter - radius - np.sqrt(3)*gapSize,
+            xHexCenter + np.sqrt(3)/2 * radius + gapSize, 
+            yHexCenter - radius/2 - np.sqrt(3)*gapSize,
+            xHexCenter + np.sqrt(3)/2 * radius + gapSize, 
+            yHexCenter - radius/2 - radius - np.sqrt(3)*gapSize
+        ]
+    colonizer.canvas.create_polygon(points,
+        outline = '#000000',
+        fill = resourceColor[portType],
+        width = 2)
+
+# Print game ID
+colonizer.canvas.create_text(
+        10, 
+        10,  
+        text = "Game ID: " + str(gameID),
+        font = ('Helvetica', 20),
+        anchor="nw"
+    )
     
-    def create_button(x1, y1, x2, y2, buttonName, stringToPrint, actionName):
-        colonizer.canvas.create_rectangle(x1, y1, x2, y2, fill = '#DCDCDC', tags = buttonName)
-        colonizer.canvas.create_text((x1+x2)/2, (y1+y2)/2, text = stringToPrint, tags = buttonName)
-        colonizer.canvas.tag_bind(buttonName,"<Button-1>", clicked)
-    
-    def clicked(*args):
-        print("Button Clicked!")
-        printHexValue()
-    
-    create_button(50, 50, 100, 100, "testButton", "Hex Value", clicked)
- 
-#%%
-# Calculate each resource's value (total economic production)
-def printHexValue():
-    woodEconValue = 0
-    brickEconValue = 0
-    sheepEconValue = 0
-    wheatEconValue = 0
-    rockEconValue = 0
-    
+# Setting up hex by hex, row by row from upper left tile
+for index, row in hexTiles.iterrows():
+    loadHex(
+        row['hexResource'], 
+        row['xHexOffset'], 
+        row['yHexOffset'], 
+        row['diceNumber']
+    )
+
+# Setting up ports
+for index, row in portTiles.iterrows():
+    loadPort(
+        row['portType'],
+        row['xHexOffset'],
+        row['yHexOffset'],
+        row['portDirection'],
+    )
+
+# Setting up buildings
+for index, row in buildingLocation.iterrows():
+    # Calculate the center of each hex tile
+    xOffset = (row['Hex1_X'] + row['Hex2_X'] + row['Hex3_X'])/3
+    yOffset = (row['Hex1_Y'] + row['Hex2_Y'] + row['Hex3_Y'])/3
+    xCenter = (
+        xBoardCenter + np.sqrt(3)/2 * radius * xOffset 
+        + gapSize * xOffset
+    )
+    yCenter = (
+        yBoardCenter + 3/4 * radius * yOffset + gapSize * yOffset
+    )
+    printBuilding(
+        xCenter, 
+        yCenter, 
+        gapSize*2.5,
+        str(int(row['BuildingNum'])),
+        # "", # Prints nothing
+        "white"
+    )
+
+# def create_button(x1, y1, x2, y2, buttonName, stringToPrint, actionName):
+#     colonizer.canvas.create_rectangle(x1, y1, x2, y2, fill = '#DCDCDC', tags = buttonName)
+#     colonizer.canvas.create_text((x1+x2)/2, (y1+y2)/2, text = stringToPrint, tags = buttonName)
+#     colonizer.canvas.tag_bind(buttonName,"<Button-1>", actionName)
+
+# def printHexValue(*args):
+#     print(buildingLocation)
+
+for index, row in buildingLocation.iterrows():
+    # print(row)
+    # Calculate the center of each hex tile
+    xOffset = (row['Hex1_X'] + row['Hex2_X'] + row['Hex3_X'])/3
+    yOffset = (row['Hex1_Y'] + row['Hex2_Y'] + row['Hex3_Y'])/3
+    xCenter = (
+        xBoardCenter + np.sqrt(3)/2 * radius * xOffset 
+        + gapSize * xOffset
+    )
+    yCenter = (
+        yBoardCenter + 3/4 * radius * yOffset + gapSize * yOffset
+    )
+    printBuilding(
+        xCenter, 
+        yCenter, 
+        gapSize*2.5,
+        "{0:0.2f}".format(row['LocValue']*100),
+        "white"
+    )
+            
+# create_button(50, 50, 150, 150, "testButton", "Hex Value", printHexValue)
+
+
     
 #%%        
-BoardModule()
 colonizer.mainloop()
 
 
