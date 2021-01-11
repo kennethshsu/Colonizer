@@ -415,8 +415,8 @@ def printBuilding(x, y, r, label, color):
     y1 = y + r
     colonizer.canvas.create_oval(x0, y0, x1, y1, fill = color)
     colonizer.canvas.create_text(
-        xCenter, 
-        yCenter, 
+        (x0+x1)/2,
+        (y0+y1)/2,
         text = label,
         font = ('Helvetica', 9)
     )
@@ -562,58 +562,46 @@ for index, row in portTiles.iterrows():
     )
 
 # Setting up buildings
-for index, row in buildingLocation.iterrows():
-    # Calculate the center of each hex tile
-    xOffset = (row['Hex1_X'] + row['Hex2_X'] + row['Hex3_X'])/3
-    yOffset = (row['Hex1_Y'] + row['Hex2_Y'] + row['Hex3_Y'])/3
-    xCenter = (
-        xBoardCenter + np.sqrt(3)/2 * radius * xOffset 
-        + gapSize * xOffset
-    )
-    yCenter = (
-        yBoardCenter + 3/4 * radius * yOffset + gapSize * yOffset
-    )
-    printBuilding(
-        xCenter, 
-        yCenter, 
-        gapSize*2.5,
-        str(int(row['BuildingNum'])),
-        # "", # Prints nothing
-        "white"
-    )
-
-# def create_button(x1, y1, x2, y2, buttonName, stringToPrint, actionName):
-#     colonizer.canvas.create_rectangle(x1, y1, x2, y2, fill = '#DCDCDC', tags = buttonName)
-#     colonizer.canvas.create_text((x1+x2)/2, (y1+y2)/2, text = stringToPrint, tags = buttonName)
-#     colonizer.canvas.tag_bind(buttonName,"<Button-1>", actionName)
-
-# def printHexValue(*args):
-#     print(buildingLocation)
-
-for index, row in buildingLocation.iterrows():
-    # print(row)
-    # Calculate the center of each hex tile
-    xOffset = (row['Hex1_X'] + row['Hex2_X'] + row['Hex3_X'])/3
-    yOffset = (row['Hex1_Y'] + row['Hex2_Y'] + row['Hex3_Y'])/3
-    xCenter = (
-        xBoardCenter + np.sqrt(3)/2 * radius * xOffset 
-        + gapSize * xOffset
-    )
-    yCenter = (
-        yBoardCenter + 3/4 * radius * yOffset + gapSize * yOffset
-    )
-    printBuilding(
-        xCenter, 
-        yCenter, 
-        gapSize*2.5,
-        "{0:0.2f}".format(row['LocValue']*100),
-        "white"
-    )
-            
-# create_button(50, 50, 150, 150, "testButton", "Hex Value", printHexValue)
-
-
+def showBuildings():
+    global showHexValue
+        
+    for index, row in buildingLocation.iterrows():
+        # Calculate the center of each hex tile
+        xOffset = (row['Hex1_X'] + row['Hex2_X'] + row['Hex3_X'])/3
+        yOffset = (row['Hex1_Y'] + row['Hex2_Y'] + row['Hex3_Y'])/3
+        xCenter = (
+            xBoardCenter + np.sqrt(3)/2 * radius * xOffset 
+            + gapSize * xOffset
+        )
+        yCenter = (
+            yBoardCenter + 3/4 * radius * yOffset + gapSize * yOffset
+        )
+        printBuilding(
+            xCenter, 
+            yCenter, 
+            gapSize*2.5,
+            "{0:0.2f}".format(row['LocValue']*100) if showHexValue else str(int(row['BuildingNum'])),
+            "#e2e2e2" if showHexValue else "#ffffff"
+        )
     
+    if showHexValue:
+        B.config(text = "    Show Building Number    ")
+    else:
+        B.config(text = "Show Building Location Value")
+    
+    # Toggle the value
+    showHexValue = not showHexValue
+    
+showHexValue = False
+B = tk.Button(
+    colonizer, 
+    text = "    Show Building Number    ", 
+    command = showBuildings)
+B.place(x = 150, y = 5)
+
+showBuildings()
+
+
 #%%        
 colonizer.mainloop()
 
