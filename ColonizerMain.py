@@ -3,7 +3,7 @@ import pandas as pd
 import tkinter as tk
 
 #%%
-gameID = 1
+gameID = 6
 
 gameWindowWidth = 1200
 gameWindowHeight = 9000
@@ -49,7 +49,6 @@ gameBoards = pd.read_excel('./GameBoards.xlsx')
 
 # Select which game board to load, gameID is selected above
 selectedGameBoard = gameBoards[gameBoards['Game'] == gameID]
-
 # We can add code here to make sure that the board is a valid board (e.g. 4 woods, 3 bricks, ..., 1 wood port, 1 brick port, etc)
 
 #%%
@@ -100,19 +99,49 @@ portTiles = pd.DataFrame(
     columns = ['portType', 'xHexOffset', 'yHexOffset', 'portDirection']
 )
 
+diceSetupHexOffset = selectedGameBoard.iloc[0, 29]
+diceSetupClockwise = selectedGameBoard.iloc[0, 30]
+
 # Order of the hexs that will be assigned dice number from diceSetupOrder
-diceAssignmentOrder = pd.DataFrame(
-    [
-        [-2, -4], [-3, -2], [-4, 0], [-3, 2], [-2, 4],
-        [0, 4], [2, 4], [3, 2], [4, 0], [3, -2], 
-        [2, -4], [0, -4], [-1, -2], [-2, 0], [-1, 2],
-        [1, 2], [2, 0], [1, -2], [0, 0]
-    ],
-    columns = ['xHexOffset', 'yHexOffset']
-)
+# Clockwise assignment
+if diceSetupClockwise:
+    diceAssignmentOrder = pd.DataFrame(
+        [
+            # Outer ring
+            [-2, -4], [0, -4], [2, -4], [3, -2], [4, 0], [3, 2], [2, 4], [0, 4], 
+            [-2, 4], [-3, 2], [-4, 0], [-3, -2], 
+            # Ring 2
+            [-1, -2], [1, -2], [2, 0], [1, 2], [-1, 2], [-2, 0],
+            # Center
+            [0, 0]
+        ],
+        columns = ['xHexOffset', 'yHexOffset']
+    )
+
+# Counter-clockwise assignment
+else:
+    diceAssignmentOrder = pd.DataFrame(
+        [
+            # Outer ring
+            [-2, -4], [-3, -2], [-4, 0], [-3, 2], [-2, 4], [0, 4], [2, 4], [3, 2],
+            [4, 0], [3, -2], [2, -4], [0, -4], 
+            # Ring 2
+            [-1, -2], [-2, 0], [-1, 2], [1, 2], [2, 0], [1, -2], 
+            # Center
+            [0, 0]
+        ],
+        columns = ['xHexOffset', 'yHexOffset']
+    )
+
+# diceAssignmentOrder = pd.DataFrame.append(
+#     diceAssignmentOrder.iloc[diceSetupHexOffset:18],
+#     diceAssignmentOrder.iloc[0:diceSetupHexOffset]
+# )
+# diceAssignmentOrder.reset_index(inplace = True, drop=True)
 
 # Loading in dice numbers, hex by hex
 diceSetupOrder = [5, 2, 6, 3, 8, 10, 9, 12, 11, 4, 8, 10, 9, 4, 5, 6, 3, 11]
+
 diceCounter = 0
 
 for index, row in diceAssignmentOrder.iterrows():
@@ -384,6 +413,8 @@ for index, row in hexTiles.iterrows():
     elif row['hexResource'] == "rock":
         resourceEconValue['rock'] += diceProb[row['diceNumber']]
 
+# print (resourceEconValue)
+
 for index, row in buildingLocation.iterrows():
     buildingLocValue = 0
     
@@ -402,7 +433,7 @@ for index, row in buildingLocation.iterrows():
                 currentTile.iloc[0]['diceNumber']
             ]
             buildingLocValue += (
-                resourceEconValue[currentTile.iloc[0]['hexResource']] * currentTileProb
+                1/resourceEconValue[currentTile.iloc[0]['hexResource']] * currentTileProb
             )
     buildingLocation.at[index, 'LocValue'] = buildingLocValue
 
@@ -580,7 +611,7 @@ def showBuildings():
             xCenter, 
             yCenter, 
             gapSize*2.5,
-            "{0:0.2f}".format(row['LocValue']*100) if showHexValue else str(int(row['BuildingNum'])),
+            "{0:0.2f}".format(row['LocValue']*10) if showHexValue else str(int(row['BuildingNum'])),
             "#e2e2e2" if showHexValue else "#ffffff"
         )
     
