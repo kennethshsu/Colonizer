@@ -3,14 +3,14 @@ import pandas as pd
 import tkinter as tk
 
 #%%
-gameID = 5
+gameID = 6
 
 gameWindowWidth = 1200
 gameWindowHeight = 9000
 xBoardCenter = 450
 yBoardCenter = 450
-radius = 60
-gapSize = 5
+radius = 65
+gapSize = 7
 
 colonizer = tk.Tk()
 colonizer.title = 'Colonizer'
@@ -472,7 +472,7 @@ def printBuilding(x, y, r, label, color):
         (x0+x1)/2,
         (y0+y1)/2,
         text = label,
-        font = ('Helvetica', 9)
+        font = ('Helvetica', 11)
     )
 
 def loadHex(hexResource, xHexOffset, yHexOffset, diceNumber):
@@ -507,7 +507,7 @@ def loadHex(hexResource, xHexOffset, yHexOffset, diceNumber):
             xHexCenter, 
             yHexCenter, 
             text = str(diceNumber),
-            font = ('Helvetica', 30)
+            font = ('Helvetica', 32)
         )
     
     # This is the hex location coordinates
@@ -515,7 +515,7 @@ def loadHex(hexResource, xHexOffset, yHexOffset, diceNumber):
         xHexCenter, 
         yHexCenter + radius/4, 
         text = "(" + str(xHexOffset) + ", " + str(yHexOffset) + ")",
-        font = ('Helvetica', 8)
+        font = ('Helvetica', 10)
     )
     
 def loadPort(portType, xHexOffset, yHexOffset, portDirection):
