@@ -3,14 +3,14 @@ import pandas as pd
 import tkinter as tk
 
 #%%
-gameID = 1
+gameID = 6
 
 gameWindowWidth = 1200
 gameWindowHeight = 9000
 xBoardCenter = 450
 yBoardCenter = 450
-radius = 60
-gapSize = 5
+radius = 65
+gapSize = 7
 
 colonizer = tk.Tk()
 colonizer.title = 'Colonizer'
@@ -49,11 +49,13 @@ gameBoards = pd.read_excel('./GameBoards.xlsx')
 
 # Select which game board to load, gameID is selected above
 selectedGameBoard = gameBoards[gameBoards['Game'] == gameID]
-
 # We can add code here to make sure that the board is a valid board (e.g. 4 woods, 3 bricks, ..., 1 wood port, 1 brick port, etc)
 
 #%%
-# Hexes, defaulting diceNumber to 0, it will be assigned next
+# Load the board, hexes will get a default diceNumber of 0,
+# it will be assigned next
+
+# Load the hexes
 hexTiles = pd.DataFrame(
     [
         # Row 1
@@ -84,7 +86,7 @@ hexTiles = pd.DataFrame(
     columns = ['hexResource', 'xHexOffset', 'yHexOffset', 'ring', 'diceNumber']
 )
 
-# Ports
+# Load the ports
 portTiles = pd.DataFrame(
     [
         [selectedGameBoard.iloc[0, 20], -2, -4, 'NW'],
@@ -100,18 +102,69 @@ portTiles = pd.DataFrame(
     columns = ['portType', 'xHexOffset', 'yHexOffset', 'portDirection']
 )
 
-# Order of the hexs that will be assigned dice number from diceSetupOrder
-diceAssignmentOrder = pd.DataFrame(
+#%%
+# Assigning dice numbers to the hexes
+diceSetupHexOffset = selectedGameBoard.iloc[0, 29]
+diceSetupClockwise = selectedGameBoard.iloc[0, 30]
+
+# The order of hexes on the outer ring, followed by the first hex
+diceOrderRing1 = pd.DataFrame(
     [
-        [-2, -4], [-3, -2], [-4, 0], [-3, 2], [-2, 4],
-        [0, 4], [2, 4], [3, 2], [4, 0], [3, -2], 
-        [2, -4], [0, -4], [-1, -2], [-2, 0], [-1, 2],
-        [1, 2], [2, 0], [1, -2], [0, 0]
-    ],
-    columns = ['xHexOffset', 'yHexOffset']
+        [-2, -4], [0, -4], [2, -4], [3, -2], [4, 0], [3, 2], [2, 4], [0, 4], 
+        [-2, 4], [-3, 2], [-4, 0], [-3, -2]
+    ]
+)
+diceOrderRing1 = pd.DataFrame.append(
+    diceOrderRing1.iloc[diceSetupHexOffset:12],
+    diceOrderRing1.iloc[0:diceSetupHexOffset]
 )
 
-# Loading in dice numbers, hex by hex
+# The order of hexes on the middle ring, followed by the first hex
+diceOrderRing2 = pd.DataFrame(
+    [
+        [-1, -2], [1, -2], [2, 0], [1, 2], [-1, 2], [-2, 0]
+    ]
+)
+diceOrderRing2 = pd.DataFrame.append(
+    diceOrderRing2.iloc[int(diceSetupHexOffset/2):6],
+    diceOrderRing2.iloc[0:int(diceSetupHexOffset/2)]
+)
+
+diceOrderRing3 = pd.DataFrame(
+    [
+        [0, 0]
+    ]
+)
+
+# Setting up the order of hexes to get assigned dice numbers
+if diceSetupClockwise:
+    diceAssignmentOrder = diceOrderRing1
+    diceAssignmentOrder = diceAssignmentOrder.append(diceOrderRing2)
+    diceAssignmentOrder = diceAssignmentOrder.append(diceOrderRing3)
+
+else:
+    diceAssignmentOrder = diceOrderRing1.iloc[0:1].append(diceOrderRing1.iloc[1:18].iloc[::-1])
+    diceAssignmentOrder = diceAssignmentOrder.append(diceOrderRing2.iloc[0:1].append(diceOrderRing2.iloc[1:18].iloc[::-1]))
+    diceAssignmentOrder = diceAssignmentOrder.append(diceOrderRing3)
+    
+    
+    # # First hex on the outer ring
+    # diceAssignmentOrder = pd.DataFrame([[-2, -4]])
+    # # Subsequent hexes on the outer ring
+    # diceAssignmentOrder = diceAssignmentOrder.append(diceOrderRing1.iloc[::-1])
+    # # First hex on the middle ring
+    # diceAssignmentOrder = diceAssignmentOrder.append(pd.DataFrame([
+    #     [-1, -2]
+    # ]))
+    # # Subsequent hexes on the middle ring
+    # diceAssignmentOrder = diceAssignmentOrder.append(diceOrderRing2.iloc[::-1])
+    # # Center hex
+    # diceAssignmentOrder = diceAssignmentOrder.append(pd.DataFrame([
+    #     [0, 0]
+    # ]))
+
+diceAssignmentOrder.columns = ['xHexOffset', 'yHexOffset']
+
 diceSetupOrder = [5, 2, 6, 3, 8, 10, 9, 12, 11, 4, 8, 10, 9, 4, 5, 6, 3, 11]
 diceCounter = 0
 
@@ -131,7 +184,6 @@ for index, row in diceAssignmentOrder.iterrows():
             (hexTiles['xHexOffset'] == row['xHexOffset']) 
             & (hexTiles['yHexOffset'] == row['yHexOffset']), 'diceNumber'
         ] = 0
-
 
 #%% Hex coordinates by ring
 HexOrder = pd.DataFrame(
@@ -384,6 +436,8 @@ for index, row in hexTiles.iterrows():
     elif row['hexResource'] == "rock":
         resourceEconValue['rock'] += diceProb[row['diceNumber']]
 
+# print (resourceEconValue)
+
 for index, row in buildingLocation.iterrows():
     buildingLocValue = 0
     
@@ -402,7 +456,7 @@ for index, row in buildingLocation.iterrows():
                 currentTile.iloc[0]['diceNumber']
             ]
             buildingLocValue += (
-                resourceEconValue[currentTile.iloc[0]['hexResource']] * currentTileProb
+                1/resourceEconValue[currentTile.iloc[0]['hexResource']] * currentTileProb
             )
     buildingLocation.at[index, 'LocValue'] = buildingLocValue
 
@@ -418,7 +472,7 @@ def printBuilding(x, y, r, label, color):
         (x0+x1)/2,
         (y0+y1)/2,
         text = label,
-        font = ('Helvetica', 9)
+        font = ('Helvetica', 11)
     )
 
 def loadHex(hexResource, xHexOffset, yHexOffset, diceNumber):
@@ -453,7 +507,7 @@ def loadHex(hexResource, xHexOffset, yHexOffset, diceNumber):
             xHexCenter, 
             yHexCenter, 
             text = str(diceNumber),
-            font = ('Helvetica', 30)
+            font = ('Helvetica', 32)
         )
     
     # This is the hex location coordinates
@@ -461,7 +515,7 @@ def loadHex(hexResource, xHexOffset, yHexOffset, diceNumber):
         xHexCenter, 
         yHexCenter + radius/4, 
         text = "(" + str(xHexOffset) + ", " + str(yHexOffset) + ")",
-        font = ('Helvetica', 8)
+        font = ('Helvetica', 10)
     )
     
 def loadPort(portType, xHexOffset, yHexOffset, portDirection):
@@ -580,7 +634,7 @@ def showBuildings():
             xCenter, 
             yCenter, 
             gapSize*2.5,
-            "{0:0.2f}".format(row['LocValue']*100) if showHexValue else str(int(row['BuildingNum'])),
+            "{0:0.2f}".format(row['LocValue']*10) if showHexValue else str(int(row['BuildingNum'])),
             "#e2e2e2" if showHexValue else "#ffffff"
         )
     
