@@ -13,8 +13,8 @@ radius = 65
 gapSize = 7
 
 colonizer = tk.Tk()
-colonizer.title = 'Colonizer'
 colonizer.canvas = tk.Canvas(width = gameWindowWidth, height = gameWindowHeight)
+colonizer.title = 'Colonizer'
 colonizer.canvas.pack()
 
 #%%
@@ -101,6 +101,27 @@ portTiles = pd.DataFrame(
     ],
     columns = ['portType', 'xHexOffset', 'yHexOffset', 'portDirection']
 )
+#%% Keep track of players
+playerStatus = pd.DataFrame(
+    {
+        'Player': [0, 1, 2, 3, 4],
+        'inPlay': [True, False, False, False, False],
+        'knownVictoryPoints': [0, 0, 0, 0, 0],
+        'currentRoadLength': [0, 0, 0, 0, 0],
+        'hasLongestRoad': [False, False, False, False, False],
+        'currentArmySize': [0, 0, 0, 0, 0],
+        'hasLargestArmy': [False, False, False, False, False],
+        'road': [0, 15, 15, 15, 15],
+        'settlement': [0, 5, 5, 5, 5],
+        'city': [0, 4, 4, 4, 4],
+        'hiddenDevCard': [25, 0, 0, 0, 0],
+        'wood': [19, 0, 0, 0, 0],
+        'brick': [19, 0, 0, 0, 0],
+        'sheep': [19, 0, 0, 0, 0],
+        'wheat': [19, 0, 0, 0, 0],
+        'rock': [19, 0, 0, 0, 0]
+    }
+)
 
 #%%
 # Assigning dice numbers to the hexes
@@ -146,22 +167,7 @@ else:
     diceAssignmentOrder = diceOrderRing1.iloc[0:1].append(diceOrderRing1.iloc[1:18].iloc[::-1])
     diceAssignmentOrder = diceAssignmentOrder.append(diceOrderRing2.iloc[0:1].append(diceOrderRing2.iloc[1:18].iloc[::-1]))
     diceAssignmentOrder = diceAssignmentOrder.append(diceOrderRing3)
-    
-    
-    # # First hex on the outer ring
-    # diceAssignmentOrder = pd.DataFrame([[-2, -4]])
-    # # Subsequent hexes on the outer ring
-    # diceAssignmentOrder = diceAssignmentOrder.append(diceOrderRing1.iloc[::-1])
-    # # First hex on the middle ring
-    # diceAssignmentOrder = diceAssignmentOrder.append(pd.DataFrame([
-    #     [-1, -2]
-    # ]))
-    # # Subsequent hexes on the middle ring
-    # diceAssignmentOrder = diceAssignmentOrder.append(diceOrderRing2.iloc[::-1])
-    # # Center hex
-    # diceAssignmentOrder = diceAssignmentOrder.append(pd.DataFrame([
-    #     [0, 0]
-    # ]))
+
 
 diceAssignmentOrder.columns = ['xHexOffset', 'yHexOffset']
 
@@ -414,6 +420,11 @@ for index, row in buildingLocation.iterrows():
                     round(row['RingBuildingNum']/5*3-1)%18
                 ]['yHexOffset']
                     
+    buildingLocation.at[index, 'OccupiedPlayer'] = 0
+    buildingLocation.at[index, 'isCity'] = False
+
+buildingLocation['OccupiedPlayer'] = buildingLocation['OccupiedPlayer'].astype(int)
+                    
 # Calculate the value of each building location
 resourceEconValue = {
     'wood': 0,
@@ -461,19 +472,22 @@ for index, row in buildingLocation.iterrows():
     buildingLocation.at[index, 'LocValue'] = buildingLocValue
 
 # print(buildingLocation)
-#%%   
-def printBuilding(x, y, r, label, color):
+#%%
+
+def printBuilding(buildingNumber, x, y, r, printText, color):
     x0 = x - r
     y0 = y - r
     x1 = x + r
     y1 = y + r
-    colonizer.canvas.create_oval(x0, y0, x1, y1, fill = color)
+    colonizer.canvas.create_oval(x0, y0, x1, y1, fill = color, tags = "Building"+str(buildingNumber))
     colonizer.canvas.create_text(
         (x0+x1)/2,
         (y0+y1)/2,
-        text = label,
-        font = ('Helvetica', 11)
+        text = printText,
+        font = ('Helvetica', 11),
+        tags = "Building"+str(buildingNumber)
     )
+    colonizer.canvas.tag_bind("Building"+str(buildingNumber), "<Button-1>", lambda event: buildingClicked(buildingNumber))
 
 def loadHex(hexResource, xHexOffset, yHexOffset, diceNumber):
     # Calculate the center of each hex tile
@@ -631,6 +645,7 @@ def showBuildings():
             yBoardCenter + 3/4 * radius * yOffset + gapSize * yOffset
         )
         printBuilding(
+            row['BuildingNum'],
             xCenter, 
             yCenter, 
             gapSize*2.5,
@@ -639,19 +654,24 @@ def showBuildings():
         )
     
     if showHexValue:
-        B.config(text = "    Show Building Number    ")
+        BuildingValueToggle.config(text = "    Show Building Number    ")
     else:
-        B.config(text = "Show Building Location Value")
+        BuildingValueToggle.config(text = "Show Building Location Value")
     
     # Toggle the value
     showHexValue = not showHexValue
+
+def buildingClicked(buildingNumber):
+    print('Building Clicked: ' + str(buildingNumber))
     
 showHexValue = False
-B = tk.Button(
+BuildingValueToggle = tk.Button(
     colonizer, 
     text = "    Show Building Number    ", 
-    command = showBuildings)
-B.place(x = 150, y = 5)
+    command = showBuildings
+)
+BuildingValueToggle.place(x = 150, y = 5)
+
 
 showBuildings()
 
