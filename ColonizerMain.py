@@ -3,7 +3,7 @@ import pandas as pd
 import tkinter as tk
 
 #%%
-gameID = 6
+gameID = 16
 
 gameWindowWidth = 1200
 gameWindowHeight = 9000
@@ -646,7 +646,7 @@ def showBuildings():
     # Toggle the value
     showHexValue = not showHexValue
     
-showHexValue = False
+showHexValue = True
 B = tk.Button(
     colonizer, 
     text = "    Show Building Number    ", 
