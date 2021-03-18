@@ -5,8 +5,8 @@ import tkinter as tk
 #%%
 gameID = 6
 
-gameWindowWidth = 1200
-gameWindowHeight = 9000
+gameWindowWidth = 1600
+gameWindowHeight = 900
 xBoardCenter = 450
 yBoardCenter = 450
 radius = 65
@@ -14,7 +14,7 @@ gapSize = 7
 
 colonizer = tk.Tk()
 colonizer.canvas = tk.Canvas(width = gameWindowWidth, height = gameWindowHeight)
-colonizer.title = 'Colonizer'
+colonizer.title('Colonizer - Game ' + str(gameID))
 colonizer.canvas.pack()
 
 #%%
@@ -101,27 +101,7 @@ portTiles = pd.DataFrame(
     ],
     columns = ['portType', 'xHexOffset', 'yHexOffset', 'portDirection']
 )
-#%% Keep track of players
-playerStatus = pd.DataFrame(
-    {
-        'Player': [0, 1, 2, 3, 4],
-        'inPlay': [True, False, False, False, False],
-        'knownVictoryPoints': [0, 0, 0, 0, 0],
-        'currentRoadLength': [0, 0, 0, 0, 0],
-        'hasLongestRoad': [False, False, False, False, False],
-        'currentArmySize': [0, 0, 0, 0, 0],
-        'hasLargestArmy': [False, False, False, False, False],
-        'road': [0, 15, 15, 15, 15],
-        'settlement': [0, 5, 5, 5, 5],
-        'city': [0, 4, 4, 4, 4],
-        'hiddenDevCard': [25, 0, 0, 0, 0],
-        'wood': [19, 0, 0, 0, 0],
-        'brick': [19, 0, 0, 0, 0],
-        'sheep': [19, 0, 0, 0, 0],
-        'wheat': [19, 0, 0, 0, 0],
-        'rock': [19, 0, 0, 0, 0]
-    }
-)
+
 
 #%%
 # Assigning dice numbers to the hexes
@@ -471,9 +451,7 @@ for index, row in buildingLocation.iterrows():
             )
     buildingLocation.at[index, 'LocValue'] = buildingLocValue
 
-# print(buildingLocation)
-#%%
-
+#%% Setting up the Board
 def printBuilding(buildingNumber, x, y, r, printText, color):
     x0 = x - r
     y0 = y - r
@@ -601,15 +579,6 @@ def loadPort(portType, xHexOffset, yHexOffset, portDirection):
         outline = '#000000',
         fill = resourceColor[portType],
         width = 2)
-
-# Print game ID
-colonizer.canvas.create_text(
-        10, 
-        10,  
-        text = "Game ID: " + str(gameID),
-        font = ('Helvetica', 20),
-        anchor="nw"
-    )
     
 # Setting up hex by hex, row by row from upper left tile
 for index, row in hexTiles.iterrows():
@@ -670,13 +639,74 @@ BuildingValueToggle = tk.Button(
     text = "    Show Building Number    ", 
     command = showBuildings
 )
-BuildingValueToggle.place(x = 150, y = 5)
+BuildingValueToggle.place(x = 20, y = 5)
 
 
 showBuildings()
 
+#%%
+def trackPlayers():
+    #%% Keep track of players
+    playerStatus = pd.DataFrame(
+        {
+            'Player': [0, 1, 2, 3, 4],
+            'inPlay': [True, False, False, False, False],
+            'knownVictoryPoints': [0, 0, 0, 0, 0],
+            'currentRoadLength': [0, 0, 0, 0, 0],
+            'hasLongestRoad': [False, False, False, False, False],
+            'currentArmySize': [0, 0, 0, 0, 0],
+            'hasLargestArmy': [False, False, False, False, False],
+            'road': [0, 15, 15, 15, 15],
+            'settlement': [0, 5, 5, 5, 5],
+            'city': [0, 4, 4, 4, 4],
+            'hiddenDevCard': [25, 0, 0, 0, 0],
+            'wood': [19, 0, 0, 0, 0],
+            'brick': [19, 0, 0, 0, 0],
+            'sheep': [19, 0, 0, 0, 0],
+            'wheat': [19, 0, 0, 0, 0],
+            'rock': [19, 0, 0, 0, 0]
+        }
+    )
+    
+    def printPlayer(playerID):
+        #Build player borders
+        colonizer.canvas.create_polygon(
+            [xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * playerID + 3, 
+             gameWindowWidth, gameWindowHeight/5 * playerID + 3, 
+             gameWindowWidth, gameWindowHeight/5 * (playerID+1) + 3, 
+             xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * (playerID+1) + 3],
+            outline = '#000000',
+            fill = '#FFFFFF',
+            width = 2
+        )
+        # if playerID == 0:
+        #     colonizer.canvas.create_polygon(
+        #         [xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * playerID+5, 
+        #          gameWindowWidth, gameWindowHeight/5 * playerID+5, 
+        #          gameWindowWidth, gameWindowHeight/5 * (playerID+1) +5, 
+        #          xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * (playerID+1)+5],
+        #         outline = '#000000',
+        #         fill = '#FFFFFF',
+        #         width = 2
+        #     )
+        # else:
+        #     colonizer.canvas.create_polygon(
+        #         [xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * playerID, 
+        #          gameWindowWidth, gameWindowHeight/5 * playerID, 
+        #          gameWindowWidth, gameWindowHeight/5 * (playerID+1), 
+        #          xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * (playerID+1)],
+        #         outline = '#000000',
+        #         fill = '#FFFFFF',
+        #         width = 2
+        #     )
+        
+    for playerID in [0, 1, 2, 3, 4]:
+        printPlayer(playerID)
 
-#%%        
+     
+trackPlayers()
+
+#%% Init game
 colonizer.mainloop()
 
 
