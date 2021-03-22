@@ -427,8 +427,6 @@ for index, row in hexTiles.iterrows():
     elif row['hexResource'] == "rock":
         resourceEconValue['rock'] += diceProb[row['diceNumber']]
 
-# print (resourceEconValue)
-
 for index, row in buildingLocation.iterrows():
     buildingLocValue = 0
     
@@ -650,6 +648,7 @@ def trackPlayers():
     playerStatus = pd.DataFrame(
         {
             'Player': [0, 1, 2, 3, 4],
+            'color': ['white', 'white', 'white', 'white', 'white'],
             'inPlay': [True, False, False, False, False],
             'knownVictoryPoints': [0, 0, 0, 0, 0],
             'currentRoadLength': [0, 0, 0, 0, 0],
@@ -667,42 +666,107 @@ def trackPlayers():
             'rock': [19, 0, 0, 0, 0]
         }
     )
+    playerColors = ['red', 'blue', 'orange', 'green', 'black']
     
     def printPlayer(playerID):
-        #Build player borders
+        #Build bank & players' borders
+        top_left_x = xBoardCenter + (radius+gapSize) * 7
+        top_left_y = gameWindowHeight/5 * playerID + 3
+        top_right_x = gameWindowWidth
+        top_right_y = gameWindowHeight/5 * playerID + 3
+        bot_left_x = xBoardCenter + (radius+gapSize) * 7
+        bot_left_y = gameWindowHeight/5 * (playerID+1) + 3
+        bot_right_x = gameWindowWidth
+        bot_right_y = gameWindowHeight/5 * (playerID+1) + 3
+        
         colonizer.canvas.create_polygon(
-            [xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * playerID + 3, 
-             gameWindowWidth, gameWindowHeight/5 * playerID + 3, 
-             gameWindowWidth, gameWindowHeight/5 * (playerID+1) + 3, 
-             xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * (playerID+1) + 3],
+            [top_left_x, top_left_y, 
+             top_right_x, top_right_y, 
+             bot_right_x, bot_right_y, 
+             bot_left_x, bot_left_y],
             outline = '#000000',
             fill = '#FFFFFF',
             width = 2
         )
-        # if playerID == 0:
-        #     colonizer.canvas.create_polygon(
-        #         [xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * playerID+5, 
-        #          gameWindowWidth, gameWindowHeight/5 * playerID+5, 
-        #          gameWindowWidth, gameWindowHeight/5 * (playerID+1) +5, 
-        #          xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * (playerID+1)+5],
-        #         outline = '#000000',
-        #         fill = '#FFFFFF',
-        #         width = 2
-        #     )
-        # else:
-        #     colonizer.canvas.create_polygon(
-        #         [xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * playerID, 
-        #          gameWindowWidth, gameWindowHeight/5 * playerID, 
-        #          gameWindowWidth, gameWindowHeight/5 * (playerID+1), 
-        #          xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * (playerID+1)],
-        #         outline = '#000000',
-        #         fill = '#FFFFFF',
-        #         width = 2
-        #     )
         
+        def printResource(resourceType):
+            resourceOffset = {
+                'wood': 0,
+                'brick': 1,
+                'sheep': 2,
+                'wheat': 3,
+                'rock': 4
+            }
+            colonizer.canvas.create_polygon(
+                [top_left_x + 200 + resourceOffset[resourceType] * 70, top_left_y + 5,
+                 top_left_x + 250 + resourceOffset[resourceType] * 70, top_left_y + 5,
+                 top_left_x + 250 + resourceOffset[resourceType] * 70, top_left_y + 85,
+                 top_left_x + 200 + resourceOffset[resourceType] * 70, top_left_y + 85],
+                outline = '#000000',
+                fill = resourceColor[resourceType]
+            )
+            
+            if playerID == 0:
+                colonizer.canvas.create_text(
+                    top_left_x + 225 + resourceOffset[resourceType] * 70, 
+                    top_left_y + 25, 
+                    text = playerStatus[resourceType][0],
+                    anchor = 'c'
+                )
+            else:
+                def updateResourceCount(*args):
+                    print("Player ID: " + str(playerID) + " " + resourceType + " " + reourceSpinbox.get())
+                    playerStatus.at[playerID, resourceType] = reourceSpinbox.get()
+                    playerStatus.at[0, resourceType] = 19 - sum(playerStatus[playerStatus['Player'] != 0][resourceType])
+                    print(playerStatus)
+                
+                reourceSpinbox = tk.Spinbox(colonizer, from_ = 0, to = 19, command = updateResourceCount)
+                reourceSpinbox.place(x = top_left_x + 225 + resourceOffset[resourceType] * 70, y = top_left_y + 25, width = 40, anchor = 'c')
+                #print and update resoruceCount here 
+                ###### TO DO
+            
+        
+        #Display bank's info
+        if playerID == 0:
+            #Show player ID and color
+            colonizer.canvas.create_text(
+                top_left_x + 10, 
+                top_left_y + 15, 
+                text = "Bank",
+                anchor = 'w'
+            )
+            
+        #Display each player's info
+        else:
+            def playerColorChange(*args):
+                playerStatus.at[playerID, 'color'] = playerColor.get()
+                playerStatus.at[playerID, 'inPlay'] = True
+                
+            #Show player ID and color
+            colonizer.canvas.create_text(
+                top_left_x + 10, 
+                top_left_y + 15, 
+                text = "Player " + str(playerID) + ":",
+                anchor = 'w'
+            )
+            
+            #Assigns color to a player with a dropdown menu
+            playerColor = tk.StringVar()
+            playerColor.set("Select Color")
+            playerColorDropdown = tk.OptionMenu(colonizer, playerColor, *playerColors, command = playerColorChange)
+            playerColorDropdown.config(width = 8)
+            playerColorDropdown.place(x = top_left_x + 70, y = top_left_y + 15, anchor = 'w')
+            
+        
+        #Display bank's resources
+        printResource('wood')
+        printResource('brick')
+        printResource('sheep')
+        printResource('wheat')
+        printResource('rock')
+            
     for playerID in [0, 1, 2, 3, 4]:
         printPlayer(playerID)
-
      
 trackPlayers()
 
