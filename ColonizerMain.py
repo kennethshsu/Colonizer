@@ -660,46 +660,49 @@ playerStats = pd.DataFrame(
         'brick': [19, 0, 0, 0, 0],
         'sheep': [19, 0, 0, 0, 0],
         'wheat': [19, 0, 0, 0, 0],
-        'rock': [19, 0, 0, 0, 0]
+        'rock': [19, 0, 0, 0, 0],
+        'woodObj': [0, 0, 0, 0, 0],
+        'brickObj':  [0, 0, 0, 0, 0],
+        'sheepObj':  [0, 0, 0, 0, 0],
+        'wheatObj':  [0, 0, 0, 0, 0],
+        'rockObj':  [0, 0, 0, 0, 0],
     }
 )
+
 playerColors = ['red', 'blue', 'orange', 'green', 'black']
+# To increment and decrement resources
+def resourceIncrement(playerID, resourceType):
+    if playerStats.at[0, resourceType] > 0:
+        playerStats.at[playerID, resourceType] += 1
+        playerStats.at[0, resourceType] -= 1
+    colonizer.canvas.itemconfig(playerStats.at[playerID, resourceType+'Obj'], text = playerStats.at[playerID, resourceType])
+    colonizer.canvas.itemconfig(playerStats.at[0, resourceType+'Obj'], text = playerStats.at[0, resourceType])
 
-def printPlayerStats(playerID):
-    #Build bank & players' borders
-    top_left_x = xBoardCenter + (radius+gapSize) * 7
-    top_left_y = gameWindowHeight/5 * playerID + 3
-    top_right_x = gameWindowWidth
-    top_right_y = gameWindowHeight/5 * playerID + 3
-    bot_left_x = xBoardCenter + (radius+gapSize) * 7
-    bot_left_y = gameWindowHeight/5 * (playerID+1) + 3
-    bot_right_x = gameWindowWidth
-    bot_right_y = gameWindowHeight/5 * (playerID+1) + 3
+def resourceDecrement(playerID, resourceType):
+    if playerStats.at[playerID, resourceType] > 0:
+        playerStats.at[playerID, resourceType] -= 1
+        playerStats.at[0, resourceType] += 1
+    colonizer.canvas.itemconfig(playerStats.at[playerID, resourceType+'Obj'], text = playerStats.at[playerID, resourceType])
+    colonizer.canvas.itemconfig(playerStats.at[0, resourceType+'Obj'], text = playerStats.at[0, resourceType])
 
-    colonizer.canvas.create_polygon(
-        [top_left_x, top_left_y,
-         top_right_x, top_right_y,
-         bot_right_x, bot_right_y,
-         bot_left_x, bot_left_y],
-        outline = '#000000',
-        fill = '#FFFFFF',
-        width = 2
-    )
+resourceOffset = {
+    'wood': 0,
+    'brick': 1,
+    'sheep': 2,
+    'wheat': 3,
+    'rock': 4
+}
 
-    def printResource(resourceType):
-        resourceOffset = {
-            'wood': 0,
-            'brick': 1,
-            'sheep': 2,
-            'wheat': 3,
-            'rock': 4
-        }
+def playerBoraderTopLeftCoord(playerID):
+    return [xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * playerID + 3]
 
-        #Building the resource box with button commands
-        def resourceIncrement(playerID, resourceType):
-            print("inc", playerID, resourceType)
-        def resourceDecrement(playerID, resourceType):
-            print("dec", playerID, resourceType)
+
+def setupPlayerStatsTracker():
+    def printResourceButton(playerID, resourceType):
+        top_left_x = playerBoraderTopLeftCoord(playerID)[0]
+        top_left_y = playerBoraderTopLeftCoord(playerID)[1]
+
+        #Building the resource box with button and commands
         colonizer.canvas.create_polygon(
             [top_left_x + 200 + resourceOffset[resourceType] * 70, top_left_y + 5,
              top_left_x + 250 + resourceOffset[resourceType] * 70, top_left_y + 5,
@@ -709,6 +712,14 @@ def printPlayerStats(playerID):
             fill = resourceColor[resourceType],
             tags = "PlayerID"+str(playerID)+"Resource"+resourceType
         )
+        playerStats.at[playerID, resourceType+"Obj"] = colonizer.canvas.create_text(
+            playerBoraderTopLeftCoord(playerID)[0] + 225 + resourceOffset[resourceType] * 70,
+            playerBoraderTopLeftCoord(playerID)[1] + 45,
+            text = playerStats.at[playerID, resourceType],
+            anchor = 'c',
+            tags = "PlayerID"+str(playerID)+"Resource"+resourceType
+        )
+
         colonizer.canvas.tag_bind("PlayerID"+str(playerID)+"Resource"+resourceType, "<Button-1>", lambda event: resourceIncrement(playerID, resourceType))
         colonizer.canvas.tag_bind("PlayerID"+str(playerID)+"Resource"+resourceType, "<Button-2>", lambda event: resourceDecrement(playerID, resourceType))
 
@@ -741,20 +752,22 @@ def printPlayerStats(playerID):
             playerColorDropdown.config(width = 8)
             playerColorDropdown.place(x = top_left_x + 70, y = top_left_y + 15, anchor = 'w')
 
-    #Display bank's resources
-    printResource('wood')
-    printResource('brick')
-    printResource('sheep')
-    printResource('wheat')
-    printResource('rock')
+    for playerID in [0, 1, 2, 3, 4]:
+        #Build bank & players' borders
+        colonizer.canvas.create_polygon(
+            [playerBoraderTopLeftCoord(playerID)[0], playerBoraderTopLeftCoord(playerID)[1],
+             gameWindowWidth, gameWindowHeight/5 * playerID + 3,
+             gameWindowWidth, gameWindowHeight/5 * (playerID+1) + 3,
+             xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * (playerID+1) + 3],
+            outline = '#000000',
+            fill = '#FFFFFF',
+            width = 2
+        )
 
-for playerID in [0, 1, 2, 3, 4]:
-    printPlayerStats(playerID)
+        for resource in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
+            printResourceButton(playerID, resource)
 
-
-
-
-
+setupPlayerStatsTracker()
 
 #%% Init game
 colonizer.mainloop()
