@@ -662,10 +662,10 @@ playerStats = pd.DataFrame(
         'wheat': [19, 0, 0, 0, 0],
         'rock': [19, 0, 0, 0, 0],
         'woodObj': [0, 0, 0, 0, 0],
-        'brickObj':  [0, 0, 0, 0, 0],
-        'sheepObj':  [0, 0, 0, 0, 0],
-        'wheatObj':  [0, 0, 0, 0, 0],
-        'rockObj':  [0, 0, 0, 0, 0],
+        'brickObj': [0, 0, 0, 0, 0],
+        'sheepObj': [0, 0, 0, 0, 0],
+        'wheatObj': [0, 0, 0, 0, 0],
+        'rockObj': [0, 0, 0, 0, 0],
     }
 )
 
@@ -714,9 +714,10 @@ def setupPlayerStatsTracker():
         )
         playerStats.at[playerID, resourceType+"Obj"] = colonizer.canvas.create_text(
             playerBoraderTopLeftCoord(playerID)[0] + 225 + resourceOffset[resourceType] * 70,
-            playerBoraderTopLeftCoord(playerID)[1] + 45,
+            playerBoraderTopLeftCoord(playerID)[1] + 25,
             text = playerStats.at[playerID, resourceType],
             anchor = 'c',
+            font=("Helvetica", 16),
             tags = "PlayerID"+str(playerID)+"Resource"+resourceType
         )
 
