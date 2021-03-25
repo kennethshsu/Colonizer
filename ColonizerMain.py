@@ -666,6 +666,7 @@ playerStats = pd.DataFrame(
         'sheepObj': [0, 0, 0, 0, 0],
         'wheatObj': [0, 0, 0, 0, 0],
         'rockObj': [0, 0, 0, 0, 0],
+        'resourceTotalObj': [0, 0, 0, 0, 0]
     }
 )
 
@@ -676,6 +677,7 @@ def resourceIncrement(playerID, resourceType):
         playerStats.at[playerID, resourceType] += 1
         playerStats.at[0, resourceType] -= 1
     colonizer.canvas.itemconfig(playerStats.at[playerID, resourceType+'Obj'], text = playerStats.at[playerID, resourceType])
+    colonizer.canvas.itemconfig(playerStats.at[playerID, 'resourceTotalObj'], text = sum(playerStats.iloc[playerID, 12:17]))
     colonizer.canvas.itemconfig(playerStats.at[0, resourceType+'Obj'], text = playerStats.at[0, resourceType])
 
 def resourceDecrement(playerID, resourceType):
@@ -683,6 +685,7 @@ def resourceDecrement(playerID, resourceType):
         playerStats.at[playerID, resourceType] -= 1
         playerStats.at[0, resourceType] += 1
     colonizer.canvas.itemconfig(playerStats.at[playerID, resourceType+'Obj'], text = playerStats.at[playerID, resourceType])
+    colonizer.canvas.itemconfig(playerStats.at[playerID, 'resourceTotalObj'], text = sum(playerStats.iloc[playerID, 12:17]))
     colonizer.canvas.itemconfig(playerStats.at[0, resourceType+'Obj'], text = playerStats.at[0, resourceType])
 
 resourceOffset = {
@@ -693,12 +696,11 @@ resourceOffset = {
     'rock': 4
 }
 
-def playerBoraderTopLeftCoord(playerID):
-    return [xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * playerID + 3]
-
-
 def setupPlayerStatsTracker():
-    def printResourceButton(playerID, resourceType):
+    def playerBoraderTopLeftCoord(playerID):
+        return [xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * playerID + 3]
+
+    def setupResourceButton(playerID, resourceType):
         top_left_x = playerBoraderTopLeftCoord(playerID)[0]
         top_left_y = playerBoraderTopLeftCoord(playerID)[1]
 
@@ -721,8 +723,14 @@ def setupPlayerStatsTracker():
             tags = "PlayerID"+str(playerID)+"Resource"+resourceType
         )
 
-        colonizer.canvas.tag_bind("PlayerID"+str(playerID)+"Resource"+resourceType, "<Button-1>", lambda event: resourceIncrement(playerID, resourceType))
-        colonizer.canvas.tag_bind("PlayerID"+str(playerID)+"Resource"+resourceType, "<Button-2>", lambda event: resourceDecrement(playerID, resourceType))
+        colonizer.canvas.tag_bind(
+            "PlayerID"+str(playerID)+"Resource"+resourceType, "<Button-1>",
+            lambda event: resourceIncrement(playerID, resourceType)
+        )
+        colonizer.canvas.tag_bind(
+            "PlayerID"+str(playerID)+"Resource"+resourceType, "<Button-2>",
+            lambda event: resourceDecrement(playerID, resourceType)
+        )
 
         #Player color selector
         if playerID == 0:
@@ -753,6 +761,7 @@ def setupPlayerStatsTracker():
             playerColorDropdown.config(width = 8)
             playerColorDropdown.place(x = top_left_x + 70, y = top_left_y + 15, anchor = 'w')
 
+
     for playerID in [0, 1, 2, 3, 4]:
         #Build bank & players' borders
         colonizer.canvas.create_polygon(
@@ -765,8 +774,25 @@ def setupPlayerStatsTracker():
             width = 2
         )
 
-        for resource in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
-            printResourceButton(playerID, resource)
+        for resourceType in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
+            setupResourceButton(playerID, resourceType)
+
+        #Total resource
+        colonizer.canvas.create_polygon(
+            [playerBoraderTopLeftCoord(playerID)[0] + 200 + 5 * 70, playerBoraderTopLeftCoord(playerID)[1] + 5,
+             playerBoraderTopLeftCoord(playerID)[0] + 250 + 5 * 70, playerBoraderTopLeftCoord(playerID)[1] + 5,
+             playerBoraderTopLeftCoord(playerID)[0] + 250 + 5 * 70, playerBoraderTopLeftCoord(playerID)[1] + 85,
+             playerBoraderTopLeftCoord(playerID)[0] + 200 + 5 * 70, playerBoraderTopLeftCoord(playerID)[1] + 85],
+            outline = '#000000',
+            fill = '#4371FF'
+        )
+        playerStats.at[playerID, "resourceTotalObj"] = colonizer.canvas.create_text(
+            playerBoraderTopLeftCoord(playerID)[0] + 225 + 5 * 70,
+            playerBoraderTopLeftCoord(playerID)[1] + 25,
+            text = "" if playerID == 0 else sum(playerStats.iloc[playerID, 12:17]),
+            anchor = 'c',
+            font=("Helvetica", 16)
+        )
 
 setupPlayerStatsTracker()
 
