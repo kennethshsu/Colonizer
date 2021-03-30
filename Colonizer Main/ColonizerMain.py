@@ -774,6 +774,27 @@ def setupPlayerStatsTracker():
             width = 2
         )
 
+        if playerID != 0:
+            #Building buttons
+            purchaseList = ['Road', 'Settlement', 'City', 'Dev Card']
+
+            for purchaseItem in range(len(purchaseList)):
+                colonizer.canvas.create_polygon(
+                    [playerBoraderTopLeftCoord(playerID)[0] + 10, playerBoraderTopLeftCoord(playerID)[1] + 40 + purchaseItem * 35,
+                     playerBoraderTopLeftCoord(playerID)[0] + 90, playerBoraderTopLeftCoord(playerID)[1] + 40 + purchaseItem * 35,
+                     playerBoraderTopLeftCoord(playerID)[0] + 90, playerBoraderTopLeftCoord(playerID)[1] + 70 + purchaseItem * 35,
+                     playerBoraderTopLeftCoord(playerID)[0] + 10, playerBoraderTopLeftCoord(playerID)[1] + 70 + purchaseItem * 35],
+                    outline = '#000000',
+                    fill = '#FFFFFF'
+                )
+                colonizer.canvas.create_text(
+                    playerBoraderTopLeftCoord(playerID)[0] + 50,
+                    playerBoraderTopLeftCoord(playerID)[1] + (40+70)/2 + purchaseItem * 35,
+                    text = purchaseList[purchaseItem],
+                    anchor = 'c',
+                    font=("Helvetica", 12)
+                )
+
         for resourceType in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
             setupResourceButton(playerID, resourceType)
 
