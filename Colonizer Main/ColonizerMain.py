@@ -745,6 +745,7 @@ def setupPlayerStatsTracker():
             def playerColorChange(*args):
                 playerStats.at[playerID, 'color'] = playerColor.get()
                 playerStats.at[playerID, 'inPlay'] = True
+                print(playerStats)
 
             #Show player ID and color
             colonizer.canvas.create_text(
@@ -794,7 +795,6 @@ def setupPlayerStatsTracker():
                     anchor = 'c',
                     font=("Helvetica", 12)
                 )
-
         for resourceType in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
             setupResourceButton(playerID, resourceType)
 
