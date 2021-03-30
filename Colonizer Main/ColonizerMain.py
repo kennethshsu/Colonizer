@@ -670,7 +670,7 @@ playerStats = pd.DataFrame(
     }
 )
 
-playerColors = ['red', 'blue', 'orange', 'green', 'black']
+
 # To increment and decrement resources
 def resourceIncrement(playerID, resourceType):
     if playerStats.at[0, resourceType] > 0:
@@ -722,7 +722,6 @@ def setupPlayerStatsTracker():
             font=("Helvetica", 16),
             tags = "PlayerID"+str(playerID)+"Resource"+resourceType
         )
-
         colonizer.canvas.tag_bind(
             "PlayerID"+str(playerID)+"Resource"+resourceType, "<Button-1>",
             lambda event: resourceIncrement(playerID, resourceType)
@@ -731,6 +730,10 @@ def setupPlayerStatsTracker():
             "PlayerID"+str(playerID)+"Resource"+resourceType, "<Button-2>",
             lambda event: resourceDecrement(playerID, resourceType)
         )
+
+    def setupPlayerColor(playerID):
+        top_left_x = playerBoraderTopLeftCoord(playerID)[0]
+        top_left_y = playerBoraderTopLeftCoord(playerID)[1]
 
         #Player color selector
         if playerID == 0:
@@ -746,6 +749,7 @@ def setupPlayerStatsTracker():
                 playerStats.at[playerID, 'color'] = playerColor.get()
                 playerStats.at[playerID, 'inPlay'] = True
                 print(playerStats)
+                setupPlayerInit(playerID)
 
             #Show player ID and color
             colonizer.canvas.create_text(
@@ -758,35 +762,23 @@ def setupPlayerStatsTracker():
             #Assigns color to a player with a dropdown menu
             playerColor = tk.StringVar()
             playerColor.set("Select Color")
-            playerColorDropdown = tk.OptionMenu(colonizer, playerColor, *playerColors, command = playerColorChange)
+            playerColorsOptions = ['red', 'blue', 'orange', 'green', 'black']
+            playerColorDropdown = tk.OptionMenu(colonizer, playerColor, *playerColorsOptions, command = playerColorChange)
             playerColorDropdown.config(width = 8)
             playerColorDropdown.place(x = top_left_x + 70, y = top_left_y + 15, anchor = 'w')
 
-
-    for playerID in [0, 1, 2, 3, 4]:
-        #Build bank & players' borders
-        colonizer.canvas.create_polygon(
-            [playerBoraderTopLeftCoord(playerID)[0], playerBoraderTopLeftCoord(playerID)[1],
-             gameWindowWidth, gameWindowHeight/5 * playerID + 3,
-             gameWindowWidth, gameWindowHeight/5 * (playerID+1) + 3,
-             xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * (playerID+1) + 3],
-            outline = '#000000',
-            fill = '#FFFFFF',
-            width = 2
-        )
-
+    def setupPlayerInit(playerID):
         if playerID != 0:
             #Building buttons
             purchaseList = ['Road', 'Settlement', 'City', 'Dev Card']
-
             for purchaseItem in range(len(purchaseList)):
                 colonizer.canvas.create_polygon(
                     [playerBoraderTopLeftCoord(playerID)[0] + 10, playerBoraderTopLeftCoord(playerID)[1] + 40 + purchaseItem * 35,
-                     playerBoraderTopLeftCoord(playerID)[0] + 90, playerBoraderTopLeftCoord(playerID)[1] + 40 + purchaseItem * 35,
-                     playerBoraderTopLeftCoord(playerID)[0] + 90, playerBoraderTopLeftCoord(playerID)[1] + 70 + purchaseItem * 35,
-                     playerBoraderTopLeftCoord(playerID)[0] + 10, playerBoraderTopLeftCoord(playerID)[1] + 70 + purchaseItem * 35],
+                      playerBoraderTopLeftCoord(playerID)[0] + 90, playerBoraderTopLeftCoord(playerID)[1] + 40 + purchaseItem * 35,
+                      playerBoraderTopLeftCoord(playerID)[0] + 90, playerBoraderTopLeftCoord(playerID)[1] + 70 + purchaseItem * 35,
+                      playerBoraderTopLeftCoord(playerID)[0] + 10, playerBoraderTopLeftCoord(playerID)[1] + 70 + purchaseItem * 35],
                     outline = '#000000',
-                    fill = '#FFFFFF'
+                    fill = playerStats.loc[playerID, 'color']
                 )
                 colonizer.canvas.create_text(
                     playerBoraderTopLeftCoord(playerID)[0] + 50,
@@ -795,6 +787,8 @@ def setupPlayerStatsTracker():
                     anchor = 'c',
                     font=("Helvetica", 12)
                 )
+
+        #Resource trackers
         for resourceType in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
             setupResourceButton(playerID, resourceType)
 
@@ -814,6 +808,22 @@ def setupPlayerStatsTracker():
             anchor = 'c',
             font=("Helvetica", 16)
         )
+
+    for playerID in [0, 1, 2, 3, 4]:
+        #Build bank & players' borders
+        colonizer.canvas.create_polygon(
+            [playerBoraderTopLeftCoord(playerID)[0], playerBoraderTopLeftCoord(playerID)[1],
+             gameWindowWidth, gameWindowHeight/5 * playerID + 3,
+             gameWindowWidth, gameWindowHeight/5 * (playerID+1) + 3,
+             xBoardCenter + (radius+gapSize) * 7, gameWindowHeight/5 * (playerID+1) + 3],
+            outline = '#000000',
+            fill = '#FFFFFF',
+            width = 2
+        )
+
+        setupPlayerInit(0)
+        setupPlayerColor(playerID)
+
 
 setupPlayerStatsTracker()
 
