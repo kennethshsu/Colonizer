@@ -30,7 +30,7 @@ resourceColor = {
     'wheat': '#F2BA24',
     'rock': '#9FA5A1',
     'desert': '#EBE5B5'
-}
+    }
 
 playerColor = {
     'red': '#FE5555',
@@ -38,7 +38,7 @@ playerColor = {
     'orange': '#FE9A55',
     'green': '#55FE5D',
     'black': '#8A8A8A'
-}
+    }
 
 # Dice probability
 diceProb = {
@@ -53,7 +53,7 @@ diceProb = {
     10: 3/36,
     11: 2/36,
     12: 1/36
-}
+    }
 
 # Keep track of players
 playerStats = pd.DataFrame(
@@ -82,7 +82,7 @@ playerStats = pd.DataFrame(
         'rockObj': [0, 0, 0, 0, 0],
         'resourceTotalObj': [0, 0, 0, 0, 0]
     }
-)
+    )
 #%%
 gameBoards = pd.read_excel('./GameBoards.xlsx')
 
@@ -123,7 +123,7 @@ hexTiles = pd.DataFrame(
         [selectedGameBoard.iloc[0, 19], 2, 4, 3, 0],
     ],
     columns = ['hexResource', 'xHexOffset', 'yHexOffset', 'ring', 'diceNumber']
-)
+    )
 
 # Load the ports
 portTiles = pd.DataFrame(
@@ -139,7 +139,7 @@ portTiles = pd.DataFrame(
         [selectedGameBoard.iloc[0, 28], -3, -2, 'W']
     ],
     columns = ['portType', 'xHexOffset', 'yHexOffset', 'portDirection']
-)
+    )
 
 
 #%%
@@ -153,28 +153,28 @@ diceOrderRing1 = pd.DataFrame(
         [-2, -4], [0, -4], [2, -4], [3, -2], [4, 0], [3, 2], [2, 4], [0, 4],
         [-2, 4], [-3, 2], [-4, 0], [-3, -2]
     ]
-)
+    )
 diceOrderRing1 = pd.DataFrame.append(
     diceOrderRing1.iloc[diceSetupHexOffset:12],
     diceOrderRing1.iloc[0:diceSetupHexOffset]
-)
+    )
 
 # The order of hexes on the middle ring, followed by the first hex
 diceOrderRing2 = pd.DataFrame(
     [
         [-1, -2], [1, -2], [2, 0], [1, 2], [-1, 2], [-2, 0]
     ]
-)
+    )
 diceOrderRing2 = pd.DataFrame.append(
     diceOrderRing2.iloc[int(diceSetupHexOffset/2):6],
     diceOrderRing2.iloc[0:int(diceSetupHexOffset/2)]
-)
+    )
 
 diceOrderRing3 = pd.DataFrame(
     [
         [0, 0]
     ]
-)
+    )
 
 # Setting up the order of hexes to get assigned dice numbers
 if diceSetupClockwise:
@@ -256,7 +256,7 @@ HexOrder = pd.DataFrame(
         [4, -1, -6]
     ],
     columns = ['Ring', 'xHexOffset', 'yHexOffset']
-)
+    )
 
 #%% Init empty settlement/city spaces
 buildingLocationArray = []
@@ -267,12 +267,13 @@ for ring in range(3):
     for buildingInRing in range(ringSize[ring]):
         buildingLocationArray.append(
             [buildingNumber, ring + 1, buildingInRing + 1]
-        )
+            )
         buildingNumber += 1
 
 buildingLocation = pd.DataFrame(
     buildingLocationArray,
-    columns = ['BuildingNum', 'Ring', 'RingBuildingNum'])
+    columns = ['BuildingNum', 'Ring', 'RingBuildingNum']
+    )
 
 for index, row in buildingLocation.iterrows():
 
@@ -441,10 +442,12 @@ for index, row in buildingLocation.iterrows():
 
     buildingLocation.at[index, 'OccupiedPlayer'] = 0
     buildingLocation.at[index, 'isCity'] = False
-    buildingLocation.at[index, 'buildingShapeObj'] = None
-    buildingLocation.at[index, 'buildingTextObj'] = None
+    buildingLocation.at[index, 'buildingShapeObj'] = 1
+    buildingLocation.at[index, 'buildingTextObj'] = 1
 
 buildingLocation['OccupiedPlayer'] = buildingLocation['OccupiedPlayer'].astype(int)
+buildingLocation['buildingShapeObj'] = buildingLocation['buildingShapeObj'].astype(int)
+buildingLocation['buildingTextObj'] = buildingLocation['buildingTextObj'].astype(int)
 
 # Calculate the value of each building location
 resourceEconValue = {
@@ -453,7 +456,7 @@ resourceEconValue = {
     'sheep': 0,
     'wheat': 0,
     'rock': 0
-}
+    }
 
 # Calcuate the scarcity of each resource
 for index, row in hexTiles.iterrows():
@@ -475,7 +478,7 @@ for index, row in buildingLocation.iterrows():
         currentTile = hexTiles[
             (hexTiles['xHexOffset'] == row["Hex"+str(hexes)+"_X"])
             & (hexTiles['yHexOffset'] == row["Hex"+str(hexes)+"_Y"])
-        ]
+            ]
 
         if currentTile.empty:
             buildingLocValue += 0
@@ -484,15 +487,15 @@ for index, row in buildingLocation.iterrows():
         else:
             currentTileProb = diceProb[
                 currentTile.iloc[0]['diceNumber']
-            ]
+                ]
             buildingLocValue += (
                 1/resourceEconValue[currentTile.iloc[0]['hexResource']] * currentTileProb
-            )
+                )
     buildingLocation.at[index, 'LocValue'] = buildingLocValue
 
 #%% Setting up the Board
 
-showHexValue = False
+showHexValue = True
 
 # Setting up buildings
 def setupBoard():
@@ -501,11 +504,11 @@ def setupBoard():
         xHexCenter = (
             xBoardCenter + np.sqrt(3)/2 * radius * xHexOffset
             + gapSize * xHexOffset
-        )
+            )
         yHexCenter = (
             yBoardCenter + 3/4 * radius * yHexOffset
             + gapSize * yHexOffset
-        )
+            )
 
         # Coordinates of the 6 points of the hex
         points = [
@@ -515,12 +518,12 @@ def setupBoard():
             xHexCenter - np.sqrt(3)/2 * radius, yHexCenter + radius/2,
             xHexCenter + 0, yHexCenter + radius,
             xHexCenter + np.sqrt(3)/2 * radius, yHexCenter + radius/2
-        ]
+            ]
         colonizer.canvas.create_polygon(points,
             outline = '#000000',
             fill = resourceColor[hexResource],
             width = 2
-        )
+            )
 
         # This is the dice roll number
         if diceNumber > 1:
@@ -529,7 +532,7 @@ def setupBoard():
                 yHexCenter,
                 text = str(diceNumber),
                 font = ('Helvetica', 32)
-            )
+                )
 
         # This is the hex location coordinates
         colonizer.canvas.create_text(
@@ -537,7 +540,7 @@ def setupBoard():
             yHexCenter + radius/4,
             text = "(" + str(xHexOffset) + ", " + str(yHexOffset) + ")",
             font = ('Helvetica', 10)
-        )
+            )
 
     # Setting up hex by hex, row by row from upper left tile
     for index, row in hexTiles.iterrows():
@@ -546,18 +549,18 @@ def setupBoard():
             row['xHexOffset'],
             row['yHexOffset'],
             row['diceNumber']
-        )
+            )
 
     def loadPort(portType, xHexOffset, yHexOffset, portDirection):
         # Calculate the center of each hex tile
         xHexCenter = (
             xBoardCenter + np.sqrt(3)/2 * radius * xHexOffset
             + gapSize * xHexOffset
-        )
+            )
         yHexCenter = (
             yBoardCenter + 3/4 * radius * yHexOffset
             + gapSize * yHexOffset
-        )
+            )
 
         if portDirection == 'E':
             points = [
@@ -567,7 +570,7 @@ def setupBoard():
                 yHexCenter + radius/2,
                 xHexCenter + np.sqrt(3)/2 * radius + np.sqrt(3)/2 * radius + gapSize*2,
                 yHexCenter + 0
-            ]
+                ]
         elif portDirection == 'SE':
             points = [
                 xHexCenter + 0 + gapSize,
@@ -576,7 +579,7 @@ def setupBoard():
                 yHexCenter + radius/2 + np.sqrt(3)*gapSize,
                 xHexCenter + np.sqrt(3)/2 * radius + gapSize,
                 yHexCenter + radius/2 + radius + np.sqrt(3)*gapSize
-            ]
+                ]
         elif portDirection == 'SW':
             points = [
                 xHexCenter - 0 - gapSize,
@@ -585,7 +588,7 @@ def setupBoard():
                 yHexCenter + radius/2 + np.sqrt(3)*gapSize,
                 xHexCenter - np.sqrt(3)/2 * radius - gapSize,
                 yHexCenter + radius/2 + radius + np.sqrt(3)*gapSize
-            ]
+                ]
         elif portDirection == 'W':
             points = [
                 xHexCenter - np.sqrt(3)/2 * radius - gapSize*2,
@@ -594,7 +597,7 @@ def setupBoard():
                 yHexCenter + radius/2,
                 xHexCenter - np.sqrt(3)/2 * radius - np.sqrt(3)/2 * radius - gapSize*2,
                 yHexCenter + 0
-            ]
+                ]
         elif portDirection == 'NW':
             points = [
                 xHexCenter - 0 - gapSize,
@@ -603,7 +606,7 @@ def setupBoard():
                 yHexCenter - radius/2 - np.sqrt(3)*gapSize,
                 xHexCenter - np.sqrt(3)/2 * radius - gapSize,
                 yHexCenter - radius/2 - radius - np.sqrt(3)*gapSize
-            ]
+                ]
         elif portDirection == "NE":
             points = [
                 xHexCenter + 0 + gapSize,
@@ -612,11 +615,12 @@ def setupBoard():
                 yHexCenter - radius/2 - np.sqrt(3)*gapSize,
                 xHexCenter + np.sqrt(3)/2 * radius + gapSize,
                 yHexCenter - radius/2 - radius - np.sqrt(3)*gapSize
-            ]
+                ]
         colonizer.canvas.create_polygon(points,
             outline = '#000000',
             fill = resourceColor[portType],
-            width = 2)
+            width = 2
+            )
 
     # Setting up ports
     for index, row in portTiles.iterrows():
@@ -625,8 +629,9 @@ def setupBoard():
             row['xHexOffset'],
             row['yHexOffset'],
             row['portDirection'],
-        )
+            )
 
+    # Setting up buildings
     def setupBuilding(buildingNumber, x, y, r, printText, color):
         x0 = x - r
         y0 = y - r
@@ -635,17 +640,16 @@ def setupBoard():
 
         buildingLocation.at[buildingNumber - 1, 'buildingShapeObj'] = colonizer.canvas.create_oval(
             x0, y0, x1, y1, fill = color, tags = "Building"+str(buildingNumber)
-        )
+            )
         buildingLocation.at[buildingNumber - 1, 'buildingTextObj'] = colonizer.canvas.create_text(
             (x0+x1)/2,
             (y0+y1)/2,
             text = printText,
             font = ('Helvetica', 11),
             tags = "Building"+str(buildingNumber)
-        )
+            )
         colonizer.canvas.tag_bind("Building"+str(buildingNumber), "<Button-1>", lambda event: buildingClicked(buildingNumber))
 
-    # Setting up buildings
     for index, row in buildingLocation.iterrows():
         # Calculate the center of each hex tile
         xOffset = (row['Hex1_X'] + row['Hex2_X'] + row['Hex3_X'])/3
@@ -653,42 +657,64 @@ def setupBoard():
         xCenter = (
             xBoardCenter + np.sqrt(3)/2 * radius * xOffset
             + gapSize * xOffset
-        )
+            )
         yCenter = (
             yBoardCenter + 3/4 * radius * yOffset + gapSize * yOffset
-        )
+            )
         setupBuilding(
             row['BuildingNum'],
             xCenter,
             yCenter,
             gapSize*2.5,
-            "{0:0.2f}".format(row['LocValue']*10) if showHexValue else str(int(row['BuildingNum'])),
-            "#e2e2e2" #playerColor[playerStats.loc[buildingLocation.loc[29, 'OccupiedPlayer'], 'color']]
-        )
+            "{0:0.2f}".format(buildingLocation.at[index, 'LocValue']*10),
+            "#FFFFFF"
+            )
 
     def toggleBuildingValue():
+        global showHexValue
+
+        # show hex value
         if showHexValue:
             BuildingValueToggle.config(text = "    Show Building Number    ")
+            for index, row in buildingLocation.iterrows():
+                colonizer.canvas.itemconfig(
+                    buildingLocation.at[index, 'buildingTextObj'],
+                    text = buildingLocation.at[index, 'BuildingNum']
+                    )
+                colonizer.canvas.itemconfig(
+                    buildingLocation.at[index, 'buildingShapeObj'],
+                    fill = "#e2e2e2"
+                    )
+
+        # show building number
         else:
             BuildingValueToggle.config(text = "Show Building Location Value")
+            for index, row in buildingLocation.iterrows():
+                colonizer.canvas.itemconfig(
+                    buildingLocation.at[index, 'buildingTextObj'],
+                    text = "{0:0.2f}".format(buildingLocation.at[index, 'LocValue']*10)
+                    )
+                colonizer.canvas.itemconfig(
+                    buildingLocation.at[index, 'buildingShapeObj'],
+                    fill = "#FFFFFF" if buildingLocation.loc[index, 'OccupiedPlayer'] == 0 else playerColor[playerStats.loc[buildingLocation.loc[index, 'OccupiedPlayer'], 'color']]
+                    )
 
         # Toggle the value
-        # global showHexValue
-        # showHexValue = not showHexValue
+        showHexValue = not showHexValue
+
+    def buildingClicked(buildingNumber):
+        buildingLocation.at[buildingNumber - 1, 'OccupiedPlayer'] = currentActivePlayer
+        colonizer.canvas.itemconfig(
+            buildingLocation.at[buildingNumber-1, 'buildingShapeObj'],
+            fill = playerColor[playerStats.loc[buildingLocation.loc[buildingNumber - 1, 'OccupiedPlayer'], 'color']]
+            )
 
     BuildingValueToggle = tk.Button(
         colonizer,
-        text = "    Show Building Number    ",
+        text = "Show Building Location Value",
         command = toggleBuildingValue
-    )
+        )
     BuildingValueToggle.place(x = 20, y = 5)
-
-    def buildingClicked(buildingNumber):
-        print("Player", currentActivePlayer, "clicked", currentAction, "on buildingLoc", str(buildingNumber))
-        buildingLocation.at[buildingNumber - 1, 'OccupiedPlayer'] = currentActivePlayer
-        print(buildingLocation)
-
-
 
 #%%
 # To increment and decrement resources
@@ -727,7 +753,7 @@ def setupPlayerStatsTracker():
             'sheep': 2,
             'wheat': 3,
             'rock': 4
-        }
+            }
 
         #Building the resource box with button and commands
         colonizer.canvas.create_polygon(
@@ -738,7 +764,7 @@ def setupPlayerStatsTracker():
             outline = '#000000',
             fill = resourceColor[resourceType],
             tags = "PlayerID"+str(playerID)+"Resource"+resourceType
-        )
+            )
         playerStats.at[playerID, resourceType+"Obj"] = colonizer.canvas.create_text(
             playerBoraderTopLeftCoord(playerID)[0] + 225 + resourceOffset[resourceType] * 70,
             playerBoraderTopLeftCoord(playerID)[1] + 25,
@@ -746,15 +772,15 @@ def setupPlayerStatsTracker():
             anchor = 'c',
             font=("Helvetica", 16),
             tags = "PlayerID"+str(playerID)+"Resource"+resourceType
-        )
+            )
         colonizer.canvas.tag_bind(
             "PlayerID"+str(playerID)+"Resource"+resourceType, "<Button-1>",
             lambda event: resourceIncrement(playerID, resourceType)
-        )
+            )
         colonizer.canvas.tag_bind(
             "PlayerID"+str(playerID)+"Resource"+resourceType, "<Button-2>",
             lambda event: resourceDecrement(playerID, resourceType)
-        )
+            )
 
     def setupPlayerColor(playerID):
         top_left_x = playerBoraderTopLeftCoord(playerID)[0]
@@ -768,7 +794,7 @@ def setupPlayerStatsTracker():
                 top_left_y + 15,
                 text = "Bank",
                 anchor = 'w'
-            )
+                )
         else:
             def playerColorChange(*args):
                 playerStats.at[playerID, 'color'] = playerIDColor.get()
@@ -781,7 +807,7 @@ def setupPlayerStatsTracker():
                 top_left_y + 15,
                 text = "Player " + str(playerID) + ":",
                 anchor = 'w'
-            )
+                )
 
             #Assigns color to a player with a dropdown menu
             playerIDColor = tk.StringVar()
@@ -797,7 +823,7 @@ def setupPlayerStatsTracker():
             'Settlement': 1,
             'City': 2,
             'Dev_Card': 3
-        }
+            }
         colonizer.canvas.create_polygon(
             [playerBoraderTopLeftCoord(playerID)[0] + 10, playerBoraderTopLeftCoord(playerID)[1] + 40 + itemOffset[item] * 35,
               playerBoraderTopLeftCoord(playerID)[0] + 90, playerBoraderTopLeftCoord(playerID)[1] + 40 + itemOffset[item] * 35,
@@ -806,7 +832,7 @@ def setupPlayerStatsTracker():
             outline = '#000000',
             fill = playerColor[playerStats.loc[playerID, 'color']],
             tags = "PlayerID"+str(playerID)+"Purchase"+item
-        )
+            )
         colonizer.canvas.create_text(
             playerBoraderTopLeftCoord(playerID)[0] + 50,
             playerBoraderTopLeftCoord(playerID)[1] + (40+70)/2 + itemOffset[item] * 35,
@@ -814,11 +840,11 @@ def setupPlayerStatsTracker():
             anchor = 'c',
             font=("Helvetica", 12),
             tags = "PlayerID"+str(playerID)+"Purchase"+item
-        )
+            )
         colonizer.canvas.tag_bind(
             "PlayerID"+str(playerID)+"Purchase"+item, "<Button-1>",
             lambda event: purchaseItem(playerID, item)
-        )
+            )
 
     def setupPlayerInit(playerID):
         if playerID != 0:
@@ -837,14 +863,14 @@ def setupPlayerStatsTracker():
              playerBoraderTopLeftCoord(playerID)[0] + 200 + 5 * 70, playerBoraderTopLeftCoord(playerID)[1] + 85],
             outline = '#000000',
             fill = '#4371FF'
-        )
+            )
         playerStats.at[playerID, "resourceTotalObj"] = colonizer.canvas.create_text(
             playerBoraderTopLeftCoord(playerID)[0] + 225 + 5 * 70,
             playerBoraderTopLeftCoord(playerID)[1] + 25,
             text = "" if playerID == 0 else sum(playerStats.iloc[playerID, 12:17]),
             anchor = 'c',
             font=("Helvetica", 16)
-        )
+            )
 
     for playerID in [0, 1, 2, 3, 4]:
         #Build bank & players' borders
@@ -856,7 +882,7 @@ def setupPlayerStatsTracker():
             outline = '#000000',
             fill = '#FFFFFF',
             width = 2
-        )
+            )
 
         setupPlayerInit(0)
         setupPlayerColor(playerID)
