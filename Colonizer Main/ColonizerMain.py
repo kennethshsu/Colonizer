@@ -80,7 +80,13 @@ playerStats = pd.DataFrame(
         'sheepObj': [0, 0, 0, 0, 0],
         'wheatObj': [0, 0, 0, 0, 0],
         'rockObj': [0, 0, 0, 0, 0],
-        'resourceTotalObj': [0, 0, 0, 0, 0]
+        'resourceTotalObj': [0, 0, 0, 0, 0],
+        'woodProdObj': [0, 0, 0, 0, 0],
+        'brickProdObj': [0, 0, 0, 0, 0],
+        'sheepProdObj': [0, 0, 0, 0, 0],
+        'wheatProdObj': [0, 0, 0, 0, 0],
+        'rockProdObj': [0, 0, 0, 0, 0],
+        'resourceTotalProdObj': [0, 0, 0, 0, 0],
     }
     )
 #%%
@@ -194,7 +200,6 @@ diceSetupOrder = [5, 2, 6, 3, 8, 10, 9, 12, 11, 4, 8, 10, 9, 4, 5, 6, 3, 11]
 diceCounter = 0
 
 for index, row in diceAssignmentOrder.iterrows():
-
     if hexTiles.loc[
             (hexTiles['xHexOffset'] == row['xHexOffset'])
             & (hexTiles['yHexOffset'] == row['yHexOffset']), 'hexResource'
@@ -670,7 +675,7 @@ def setupBoard():
             "#FFFFFF"
             )
 
-    def toggleBuildingValue():
+    def toggleBuildingNumber():
         global showHexValue
 
         # show hex value
@@ -699,20 +704,52 @@ def setupBoard():
                     fill = "#FFFFFF" if buildingLocation.loc[index, 'OccupiedPlayer'] == 0 else playerColor[playerStats.loc[buildingLocation.loc[index, 'OccupiedPlayer'], 'color']]
                     )
 
-        # Toggle the value
+        # toggle the value
         showHexValue = not showHexValue
 
     def buildingClicked(buildingNumber):
-        buildingLocation.at[buildingNumber - 1, 'OccupiedPlayer'] = currentActivePlayer
-        colonizer.canvas.itemconfig(
-            buildingLocation.at[buildingNumber-1, 'buildingShapeObj'],
-            fill = playerColor[playerStats.loc[buildingLocation.loc[buildingNumber - 1, 'OccupiedPlayer'], 'color']]
-            )
+        global currentActivePlayer, currentAction
+
+        if currentAction == "Settlement":
+            # color the building location
+            buildingLocation.at[buildingNumber - 1, 'OccupiedPlayer'] = currentActivePlayer
+            colonizer.canvas.itemconfig(
+                buildingLocation.at[buildingNumber-1, 'buildingShapeObj'],
+                fill = playerColor[playerStats.loc[buildingLocation.loc[buildingNumber - 1, 'OccupiedPlayer'], 'color']]
+                )
+
+        # update resource production value
+        def hexValue(X_coor, Y_coor):
+            hexResource = hexTiles.loc[(hexTiles['xHexOffset'] == X_coor) & (hexTiles['yHexOffset'] == Y_coor)]['hexResource'].any()
+            if (hexResource == False) | (hexResource == "desert"):
+                return ["No Resource", 0]
+            diceNumber = hexTiles.loc[(hexTiles['xHexOffset'] == X_coor) & (hexTiles['yHexOffset'] == Y_coor)]['diceNumber'].item()
+            return [hexResource, diceProb[diceNumber]]
+
+        totalProd = 0
+        for resourceType in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
+            resourceProd = 0
+            for index, row in buildingLocation.iterrows():
+                if buildingLocation.loc[index, "OccupiedPlayer"] == currentActivePlayer:
+                    if hexValue(buildingLocation.loc[index, "Hex1_X"], buildingLocation.loc[index, "Hex1_Y"])[0] == resourceType:
+                        resourceProd += hexValue(buildingLocation.loc[index, "Hex1_X"], buildingLocation.loc[index, "Hex1_Y"])[1]
+                    if hexValue(buildingLocation.loc[index, "Hex2_X"], buildingLocation.loc[index, "Hex2_Y"])[0] == resourceType:
+                        resourceProd += hexValue(buildingLocation.loc[index, "Hex2_X"], buildingLocation.loc[index, "Hex2_Y"])[1]
+                    if hexValue(buildingLocation.loc[index, "Hex3_X"], buildingLocation.loc[index, "Hex3_Y"])[0] == resourceType:
+                        resourceProd += hexValue(buildingLocation.loc[index, "Hex3_X"], buildingLocation.loc[index, "Hex3_Y"])[1]
+            # print(resourceType, resourceProd)
+            totalProd += resourceProd
+
+            colonizer.canvas.itemconfig(playerStats.loc[currentActivePlayer, resourceType+"ProdObj"], text = "+" + "{0:0.3f}".format(resourceProd))
+            colonizer.canvas.itemconfig(playerStats.loc[currentActivePlayer, "resourceTotalProdObj"], text = "+" + "{0:0.3f}".format(totalProd))
+
+        currentAction = None
+        currentActivePlayer = None
 
     BuildingValueToggle = tk.Button(
         colonizer,
         text = "Show Building Location Value",
-        command = toggleBuildingValue
+        command = toggleBuildingNumber
         )
     BuildingValueToggle.place(x = 20, y = 5)
 
@@ -780,6 +817,15 @@ def setupPlayerStatsTracker():
         colonizer.canvas.tag_bind(
             "PlayerID"+str(playerID)+"Resource"+resourceType, "<Button-2>",
             lambda event: resourceDecrement(playerID, resourceType)
+            )
+
+        #Production value
+        playerStats.at[playerID, resourceType+"ProdObj"] = colonizer.canvas.create_text(
+            playerBoraderTopLeftCoord(playerID)[0] + 225 + resourceOffset[resourceType] * 70,
+            playerBoraderTopLeftCoord(playerID)[1] + 45,
+            text = "+0.000",
+            anchor = 'c',
+            font=("Helvetica", 12)
             )
 
     def setupPlayerColor(playerID):
@@ -867,9 +913,16 @@ def setupPlayerStatsTracker():
         playerStats.at[playerID, "resourceTotalObj"] = colonizer.canvas.create_text(
             playerBoraderTopLeftCoord(playerID)[0] + 225 + 5 * 70,
             playerBoraderTopLeftCoord(playerID)[1] + 25,
-            text = "" if playerID == 0 else sum(playerStats.iloc[playerID, 12:17]),
+            text = "" if playerID == 0 else "0",
             anchor = 'c',
             font=("Helvetica", 16)
+            )
+        playerStats.at[playerID, "resourceTotalProdObj"] = colonizer.canvas.create_text(
+            playerBoraderTopLeftCoord(playerID)[0] + 225 + 5 * 70,
+            playerBoraderTopLeftCoord(playerID)[1] + 45,
+            text = "" if playerID == 0 else "+0.000",
+            anchor = 'c',
+            font=("Helvetica", 12)
             )
 
     for playerID in [0, 1, 2, 3, 4]:
