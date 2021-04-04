@@ -720,10 +720,12 @@ def setupBoard():
                 )
 
         # update resource production value
+        #### some inefficiency in here
         def hexValue(X_coor, Y_coor):
             hexResource = hexTiles.loc[(hexTiles['xHexOffset'] == X_coor) & (hexTiles['yHexOffset'] == Y_coor)]['hexResource'].any()
             if (hexResource == False) | (hexResource == "desert"):
                 return ["No Resource", 0]
+
             diceNumber = hexTiles.loc[(hexTiles['xHexOffset'] == X_coor) & (hexTiles['yHexOffset'] == Y_coor)]['diceNumber'].item()
             return [hexResource, diceProb[diceNumber]]
 
@@ -736,35 +738,38 @@ def setupBoard():
             for index, row in buildingLocation.iterrows():
                 currentRow = buildingLocation.loc[index]
 
-                if hexValue(currentRow["Hex1_X"], currentRow["Hex1_Y"])[0] == resourceType:
-                    currentHexResourceValue = hexValue(currentRow["Hex1_X"], currentRow["Hex1_Y"])[1]
+                currentHexValue = hexValue(currentRow["Hex1_X"], currentRow["Hex1_Y"])
+                if currentHexValue[0] == resourceType:
+                    currentHexResourceValue = currentHexValue[1]
                     hexPlayer = buildingLocation.loc[index, "OccupiedPlayer"]
 
                     if hexPlayer != 0:
                         econResourceProd += currentHexResourceValue
 
-                    if hexPlayer == currentActivePlayer:
-                        playerResourceProd += currentHexResourceValue
+                        if hexPlayer == currentActivePlayer:
+                            playerResourceProd += currentHexResourceValue
 
-                if hexValue(currentRow["Hex2_X"], currentRow["Hex2_Y"])[0] == resourceType:
-                    currentHexResourceValue = hexValue(currentRow["Hex2_X"], currentRow["Hex2_Y"])[1]
+                currentHexValue = hexValue(currentRow["Hex2_X"], currentRow["Hex2_Y"])
+                if currentHexValue[0] == resourceType:
+                    currentHexResourceValue = currentHexValue[1]
                     hexPlayer = buildingLocation.loc[index, "OccupiedPlayer"]
 
                     if hexPlayer != 0:
                         econResourceProd += currentHexResourceValue
 
-                    if hexPlayer == currentActivePlayer:
-                        playerResourceProd += currentHexResourceValue
+                        if hexPlayer == currentActivePlayer:
+                            playerResourceProd += currentHexResourceValue
 
-                if hexValue(currentRow["Hex3_X"], currentRow["Hex3_Y"])[0] == resourceType:
-                    currentHexResourceValue = hexValue(currentRow["Hex3_X"], currentRow["Hex3_Y"])[1]
+                currentHexValue = hexValue(currentRow["Hex3_X"], currentRow["Hex3_Y"])
+                if currentHexValue[0] == resourceType:
+                    currentHexResourceValue = currentHexValue[1]
                     hexPlayer = buildingLocation.loc[index, "OccupiedPlayer"]
 
                     if hexPlayer != 0:
                         econResourceProd += currentHexResourceValue
 
-                    if hexPlayer == currentActivePlayer:
-                        playerResourceProd += currentHexResourceValue
+                        if hexPlayer == currentActivePlayer:
+                            playerResourceProd += currentHexResourceValue
 
             playerTotalProd += playerResourceProd
             econTotalProd += econResourceProd
