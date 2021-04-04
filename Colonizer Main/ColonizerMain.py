@@ -3,7 +3,7 @@ import pandas as pd
 import tkinter as tk
 
 #%%
-gameID = 5
+gameID = 21
 
 gameWindowWidth = 1600
 gameWindowHeight = 900
@@ -16,6 +16,7 @@ colonizer = tk.Tk()
 colonizer.canvas = tk.Canvas(width = gameWindowWidth, height = gameWindowHeight)
 colonizer.title('Colonizer - Game ' + str(gameID))
 colonizer.canvas.pack()
+colonizer.focus_force()
 
 currentActivePlayer = 0
 currentAction = None
@@ -733,41 +734,46 @@ def setupBoard():
             econResourceProd = 0
 
             for index, row in buildingLocation.iterrows():
-                if hexValue(buildingLocation.loc[index, "Hex1_X"], buildingLocation.loc[index, "Hex1_Y"])[0] == resourceType:
-                    currentHexResourceValue = hexValue(buildingLocation.loc[index, "Hex1_X"], buildingLocation.loc[index, "Hex1_Y"])[1]
+                currentRow = buildingLocation.loc[index]
 
-                    if buildingLocation.loc[index, "OccupiedPlayer"] != 0:
+                if hexValue(currentRow["Hex1_X"], currentRow["Hex1_Y"])[0] == resourceType:
+                    currentHexResourceValue = hexValue(currentRow["Hex1_X"], currentRow["Hex1_Y"])[1]
+                    hexPlayer = buildingLocation.loc[index, "OccupiedPlayer"]
+
+                    if hexPlayer != 0:
                         econResourceProd += currentHexResourceValue
 
-                    if buildingLocation.loc[index, "OccupiedPlayer"] == currentActivePlayer:
+                    if hexPlayer == currentActivePlayer:
                         playerResourceProd += currentHexResourceValue
 
-                if hexValue(buildingLocation.loc[index, "Hex2_X"], buildingLocation.loc[index, "Hex2_Y"])[0] == resourceType:
-                    currentHexResourceValue = hexValue(buildingLocation.loc[index, "Hex2_X"], buildingLocation.loc[index, "Hex2_Y"])[1]
+                if hexValue(currentRow["Hex2_X"], currentRow["Hex2_Y"])[0] == resourceType:
+                    currentHexResourceValue = hexValue(currentRow["Hex2_X"], currentRow["Hex2_Y"])[1]
+                    hexPlayer = buildingLocation.loc[index, "OccupiedPlayer"]
 
-                    if buildingLocation.loc[index, "OccupiedPlayer"] != 0:
+                    if hexPlayer != 0:
                         econResourceProd += currentHexResourceValue
 
-                    if buildingLocation.loc[index, "OccupiedPlayer"] == currentActivePlayer:
+                    if hexPlayer == currentActivePlayer:
                         playerResourceProd += currentHexResourceValue
 
-                if hexValue(buildingLocation.loc[index, "Hex3_X"], buildingLocation.loc[index, "Hex3_Y"])[0] == resourceType:
-                    currentHexResourceValue = hexValue(buildingLocation.loc[index, "Hex3_X"], buildingLocation.loc[index, "Hex3_Y"])[1]
+                if hexValue(currentRow["Hex3_X"], currentRow["Hex3_Y"])[0] == resourceType:
+                    currentHexResourceValue = hexValue(currentRow["Hex3_X"], currentRow["Hex3_Y"])[1]
+                    hexPlayer = buildingLocation.loc[index, "OccupiedPlayer"]
 
-                    if buildingLocation.loc[index, "OccupiedPlayer"] != 0:
+                    if hexPlayer != 0:
                         econResourceProd += currentHexResourceValue
 
-                    if buildingLocation.loc[index, "OccupiedPlayer"] == currentActivePlayer:
+                    if hexPlayer == currentActivePlayer:
                         playerResourceProd += currentHexResourceValue
 
             playerTotalProd += playerResourceProd
             econTotalProd += econResourceProd
 
             # update the production power
-            colonizer.canvas.itemconfig(playerStats.loc[0, resourceType+"ProdObj"], text = "+" + "{0:0.2f}".format(econResourceProd))
-            colonizer.canvas.itemconfig(playerStats.loc[0, "resourceTotalProdObj"], text = "+" + "{0:0.2f}".format(econTotalProd))
-            colonizer.canvas.itemconfig(playerStats.loc[currentActivePlayer, resourceType+"ProdObj"], text = "+" + "{0:0.2f}".format(playerResourceProd))
-            colonizer.canvas.itemconfig(playerStats.loc[currentActivePlayer, "resourceTotalProdObj"], text = "+" + "{0:0.2f}".format(playerTotalProd))
+            colonizer.canvas.itemconfig(playerStats.loc[0, resourceType+"ProdObj"], text = "+" + "{0:0.3f}".format(econResourceProd))
+            colonizer.canvas.itemconfig(playerStats.loc[0, "resourceTotalProdObj"], text = "+" + "{0:0.3f}".format(econTotalProd))
+            colonizer.canvas.itemconfig(playerStats.loc[currentActivePlayer, resourceType+"ProdObj"], text = "+" + "{0:0.3f}".format(playerResourceProd))
+            colonizer.canvas.itemconfig(playerStats.loc[currentActivePlayer, "resourceTotalProdObj"], text = "+" + "{0:0.3f}".format(playerTotalProd))
 
         currentAction = None
         currentActivePlayer = None
@@ -849,7 +855,7 @@ def setupPlayerStatsTracker():
         playerStats.at[playerID, resourceType+"ProdObj"] = colonizer.canvas.create_text(
             playerBoraderTopLeftCoord(playerID)[0] + 225 + resourceOffset[resourceType] * 70,
             playerBoraderTopLeftCoord(playerID)[1] + 45,
-            text = "+0.00",
+            text = "+0.000",
             anchor = 'c',
             font=("Helvetica", 12)
             )
@@ -946,7 +952,7 @@ def setupPlayerStatsTracker():
         playerStats.at[playerID, "resourceTotalProdObj"] = colonizer.canvas.create_text(
             playerBoraderTopLeftCoord(playerID)[0] + 225 + 5 * 70,
             playerBoraderTopLeftCoord(playerID)[1] + 45,
-            text = "+0.00",
+            text = "+0.000",
             anchor = 'c',
             font=("Helvetica", 12)
             )
@@ -971,6 +977,7 @@ setupPlayerStatsTracker()
 
 #%% Init game
 colonizer.mainloop()
+
 
 
 
