@@ -20,6 +20,61 @@ colonizer.focus_force()
 
 currentActivePlayer = 0
 currentAction = None
+#%%
+# Debugger
+debugMode = False
+debugMsg = ['Enable Debug Mode', 'Disable Debug Mode']
+
+def toggleDebugMode():
+    global debugMode
+
+    # toggle the value
+    debugMode = not debugMode
+    BuildingValueToggle.config(text = debugMsg[debugMode])
+
+    if debugMode:
+        #print hex coordinates
+        for index, row in hexTiles.iterrows():
+            colonizer.canvas.itemconfig(
+                hexTiles.at[index, 'hexCoordTextObj'],
+                text = "(" + str(row['xHexOffset']) + ", " + str(row['yHexOffset']) + ")"
+                )
+        #print building number
+        for index, row in buildingLocation.iterrows():
+            colonizer.canvas.itemconfig(
+                buildingLocation.at[index, 'buildingTextObj'],
+                text = buildingLocation.at[index, 'BuildingNum']
+                )
+            colonizer.canvas.itemconfig(
+                buildingLocation.at[index, 'buildingShapeObj'],
+                fill = "#e2e2e2"
+                )
+
+    else:
+        #print hex coordinates
+        for index, row in hexTiles.iterrows():
+            colonizer.canvas.itemconfig(
+                hexTiles.at[index, 'hexCoordTextObj'],
+                text = ""
+                )
+        #print building location value
+        for index, row in buildingLocation.iterrows():
+            colonizer.canvas.itemconfig(
+                buildingLocation.at[index, 'buildingTextObj'],
+                text = "{0:0.2f}".format(buildingLocation.at[index, 'LocValue']*10)
+                )
+            colonizer.canvas.itemconfig(
+                buildingLocation.at[index, 'buildingShapeObj'],
+                fill = "#FFFFFF" if buildingLocation.loc[index, 'OccupiedPlayer'] == 0 else playerColor[playerStats.loc[buildingLocation.loc[index, 'OccupiedPlayer'], 'color']]
+                )
+
+BuildingValueToggle = tk.Button(
+    colonizer,
+    text = debugMsg[0],
+    command = toggleDebugMode
+    )
+BuildingValueToggle.place(x = 20, y = 5)
+
 
 #%%
 # Some useful dictionaries
@@ -105,31 +160,31 @@ selectedGameBoard = gameBoards[gameBoards['Game'] == gameID]
 hexTiles = pd.DataFrame(
     [
         # Row 1
-        [selectedGameBoard.iloc[0, 1], -2, -4, 3, 0],
-        [selectedGameBoard.iloc[0, 2], 0, -4, 3, 0],
-        [selectedGameBoard.iloc[0, 3], 2, -4, 3, 0],
+        [selectedGameBoard.iloc[0, 1], -2, -4, 3, 0, 0],
+        [selectedGameBoard.iloc[0, 2], 0, -4, 3, 0, 0],
+        [selectedGameBoard.iloc[0, 3], 2, -4, 3, 0, 0],
         # Row 2
-        [selectedGameBoard.iloc[0, 4], -3, -2, 3, 0],
-        [selectedGameBoard.iloc[0, 5], -1, -2, 2, 0],
-        [selectedGameBoard.iloc[0, 6], 1, -2, 2, 0],
-        [selectedGameBoard.iloc[0, 7], 3, -2, 3, 0],
+        [selectedGameBoard.iloc[0, 4], -3, -2, 3, 0, 0],
+        [selectedGameBoard.iloc[0, 5], -1, -2, 2, 0, 0],
+        [selectedGameBoard.iloc[0, 6], 1, -2, 2, 0, 0],
+        [selectedGameBoard.iloc[0, 7], 3, -2, 3, 0, 0],
         # Row 3
-        [selectedGameBoard.iloc[0, 8], -4, 0, 3, 0],
-        [selectedGameBoard.iloc[0, 9], -2, 0, 2, 0],
-        [selectedGameBoard.iloc[0, 10], 0, 0, 1, 0],
-        [selectedGameBoard.iloc[0, 11], 2, 0, 2, 0],
-        [selectedGameBoard.iloc[0, 12], 4, 0, 3, 0],
+        [selectedGameBoard.iloc[0, 8], -4, 0, 3, 0, 0],
+        [selectedGameBoard.iloc[0, 9], -2, 0, 2, 0, 0],
+        [selectedGameBoard.iloc[0, 10], 0, 0, 1, 0, 0],
+        [selectedGameBoard.iloc[0, 11], 2, 0, 2, 0, 0],
+        [selectedGameBoard.iloc[0, 12], 4, 0, 3, 0, 0],
         # Row 4
-        [selectedGameBoard.iloc[0, 13], -3, 2, 3, 0],
-        [selectedGameBoard.iloc[0, 14], -1, 2, 2, 0],
-        [selectedGameBoard.iloc[0, 15], 1, 2, 2, 0],
-        [selectedGameBoard.iloc[0, 16], 3, 2, 3, 0],
+        [selectedGameBoard.iloc[0, 13], -3, 2, 3, 0, 0],
+        [selectedGameBoard.iloc[0, 14], -1, 2, 2, 0, 0],
+        [selectedGameBoard.iloc[0, 15], 1, 2, 2, 0, 0],
+        [selectedGameBoard.iloc[0, 16], 3, 2, 3, 0, 0],
         # Row 5
-        [selectedGameBoard.iloc[0, 17], -2, 4, 3, 0],
-        [selectedGameBoard.iloc[0, 18], 0, 4, 3, 0],
-        [selectedGameBoard.iloc[0, 19], 2, 4, 3, 0],
+        [selectedGameBoard.iloc[0, 17], -2, 4, 3, 0, 0],
+        [selectedGameBoard.iloc[0, 18], 0, 4, 3, 0, 0],
+        [selectedGameBoard.iloc[0, 19], 2, 4, 3, 0, 0],
     ],
-    columns = ['hexResource', 'xHexOffset', 'yHexOffset', 'ring', 'diceNumber']
+    columns = ['hexResource', 'xHexOffset', 'yHexOffset', 'ring', 'diceNumber', 'hexCoordTextObj']
     )
 
 # Load the ports
@@ -501,11 +556,9 @@ for index, row in buildingLocation.iterrows():
 
 #%% Setting up the Board
 
-showHexValue = True
-
 # Setting up buildings
 def setupBoard():
-    def loadHex(hexResource, xHexOffset, yHexOffset, diceNumber):
+    def loadHex(hexResource, xHexOffset, yHexOffset, diceNumber, index):
         # Calculate the center of each hex tile
         xHexCenter = (
             xBoardCenter + np.sqrt(3)/2 * radius * xHexOffset
@@ -541,10 +594,10 @@ def setupBoard():
                 )
 
         # This is the hex location coordinates
-        colonizer.canvas.create_text(
+        hexTiles.at[index, 'hexCoordTextObj'] = colonizer.canvas.create_text(
             xHexCenter,
-            yHexCenter + radius/4,
-            text = "(" + str(xHexOffset) + ", " + str(yHexOffset) + ")",
+            yHexCenter + radius/3.5,
+            text = "",
             font = ('Helvetica', 10)
             )
 
@@ -554,7 +607,8 @@ def setupBoard():
             row['hexResource'],
             row['xHexOffset'],
             row['yHexOffset'],
-            row['diceNumber']
+            row['diceNumber'],
+            index
             )
 
     def loadPort(portType, xHexOffset, yHexOffset, portDirection):
@@ -676,38 +730,6 @@ def setupBoard():
             "#FFFFFF"
             )
 
-    def toggleBuildingNumber():
-        global showHexValue
-
-        # show hex value
-        if showHexValue:
-            BuildingValueToggle.config(text = "    Show Building Number    ")
-            for index, row in buildingLocation.iterrows():
-                colonizer.canvas.itemconfig(
-                    buildingLocation.at[index, 'buildingTextObj'],
-                    text = buildingLocation.at[index, 'BuildingNum']
-                    )
-                colonizer.canvas.itemconfig(
-                    buildingLocation.at[index, 'buildingShapeObj'],
-                    fill = "#e2e2e2"
-                    )
-
-        # show building number
-        else:
-            BuildingValueToggle.config(text = "Show Building Location Value")
-            for index, row in buildingLocation.iterrows():
-                colonizer.canvas.itemconfig(
-                    buildingLocation.at[index, 'buildingTextObj'],
-                    text = "{0:0.2f}".format(buildingLocation.at[index, 'LocValue']*10)
-                    )
-                colonizer.canvas.itemconfig(
-                    buildingLocation.at[index, 'buildingShapeObj'],
-                    fill = "#FFFFFF" if buildingLocation.loc[index, 'OccupiedPlayer'] == 0 else playerColor[playerStats.loc[buildingLocation.loc[index, 'OccupiedPlayer'], 'color']]
-                    )
-
-        # toggle the value
-        showHexValue = not showHexValue
-
     def buildingClicked(buildingNumber):
         global currentActivePlayer, currentAction
 
@@ -720,7 +742,6 @@ def setupBoard():
                 )
 
         # update resource production value
-        #### some inefficiency in here
         def hexValue(X_coor, Y_coor):
             hexResource = hexTiles.loc[(hexTiles['xHexOffset'] == X_coor) & (hexTiles['yHexOffset'] == Y_coor)]['hexResource'].any()
             if (hexResource == False) | (hexResource == "desert"):
@@ -738,38 +759,40 @@ def setupBoard():
             for index, row in buildingLocation.iterrows():
                 currentRow = buildingLocation.loc[index]
 
-                currentHexValue = hexValue(currentRow["Hex1_X"], currentRow["Hex1_Y"])
-                if currentHexValue[0] == resourceType:
-                    currentHexResourceValue = currentHexValue[1]
-                    hexPlayer = buildingLocation.loc[index, "OccupiedPlayer"]
+                if currentRow["OccupiedPlayer"] != 0:
 
-                    if hexPlayer != 0:
-                        econResourceProd += currentHexResourceValue
+                    currentHexValue = hexValue(currentRow["Hex1_X"], currentRow["Hex1_Y"])
+                    if currentHexValue[0] == resourceType:
+                        currentHexResourceValue = currentHexValue[1]
+                        hexPlayer = buildingLocation.loc[index, "OccupiedPlayer"]
 
-                        if hexPlayer == currentActivePlayer:
-                            playerResourceProd += currentHexResourceValue
+                        if hexPlayer != 0:
+                            econResourceProd += currentHexResourceValue
 
-                currentHexValue = hexValue(currentRow["Hex2_X"], currentRow["Hex2_Y"])
-                if currentHexValue[0] == resourceType:
-                    currentHexResourceValue = currentHexValue[1]
-                    hexPlayer = buildingLocation.loc[index, "OccupiedPlayer"]
+                            if hexPlayer == currentActivePlayer:
+                                playerResourceProd += currentHexResourceValue
 
-                    if hexPlayer != 0:
-                        econResourceProd += currentHexResourceValue
+                    currentHexValue = hexValue(currentRow["Hex2_X"], currentRow["Hex2_Y"])
+                    if currentHexValue[0] == resourceType:
+                        currentHexResourceValue = currentHexValue[1]
+                        hexPlayer = buildingLocation.loc[index, "OccupiedPlayer"]
 
-                        if hexPlayer == currentActivePlayer:
-                            playerResourceProd += currentHexResourceValue
+                        if hexPlayer != 0:
+                            econResourceProd += currentHexResourceValue
 
-                currentHexValue = hexValue(currentRow["Hex3_X"], currentRow["Hex3_Y"])
-                if currentHexValue[0] == resourceType:
-                    currentHexResourceValue = currentHexValue[1]
-                    hexPlayer = buildingLocation.loc[index, "OccupiedPlayer"]
+                            if hexPlayer == currentActivePlayer:
+                                playerResourceProd += currentHexResourceValue
 
-                    if hexPlayer != 0:
-                        econResourceProd += currentHexResourceValue
+                    currentHexValue = hexValue(currentRow["Hex3_X"], currentRow["Hex3_Y"])
+                    if currentHexValue[0] == resourceType:
+                        currentHexResourceValue = currentHexValue[1]
+                        hexPlayer = buildingLocation.loc[index, "OccupiedPlayer"]
 
-                        if hexPlayer == currentActivePlayer:
-                            playerResourceProd += currentHexResourceValue
+                        if hexPlayer != 0:
+                            econResourceProd += currentHexResourceValue
+
+                            if hexPlayer == currentActivePlayer:
+                                playerResourceProd += currentHexResourceValue
 
             playerTotalProd += playerResourceProd
             econTotalProd += econResourceProd
@@ -782,13 +805,6 @@ def setupBoard():
 
         currentAction = None
         currentActivePlayer = None
-
-    BuildingValueToggle = tk.Button(
-        colonizer,
-        text = "Show Building Location Value",
-        command = toggleBuildingNumber
-        )
-    BuildingValueToggle.place(x = 20, y = 5)
 
 #%%
 # To increment and decrement resources
