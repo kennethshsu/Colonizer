@@ -30,7 +30,7 @@ def toggleDebugMode():
 
     # toggle the value
     debugMode = not debugMode
-    BuildingValueToggle.config(text = debugMsg[debugMode])
+    DebugToggle.config(text = debugMsg[debugMode])
 
     if debugMode:
         #print hex coordinates
@@ -68,12 +68,30 @@ def toggleDebugMode():
                 fill = "#FFFFFF" if buildingLocation.loc[index, 'OccupiedPlayer'] == 0 else playerColor[playerStats.loc[buildingLocation.loc[index, 'OccupiedPlayer'], 'color']]
                 )
 
-BuildingValueToggle = tk.Button(
+DebugToggle = tk.Button(
     colonizer,
     text = debugMsg[0],
     command = toggleDebugMode
     )
-BuildingValueToggle.place(x = 20, y = 5)
+DebugToggle.place(x = 100, y = 20, anchor = 'c')
+
+#%% Algorithms to evaluate starting positions
+def evaluatePlayerRank(*args):
+    evalMethod = evaluationMethod.get()
+    print("evaluatePlayerRank: ", evalMethod)
+
+evalMethods = [
+    'Getting the Most Resources',
+    'Getting the Most & Diverse Resources (Sharpe Ratio)',
+    'Getting the Most Rare Resources',
+    'Getting the Most Rarely Produced Resources',
+
+    ]
+evaluationMethod = tk.StringVar()
+evaluationMethod.set("Rank Players with...")
+evaluationMethodDropdown = tk.OptionMenu(colonizer, evaluationMethod, *evalMethods, command = evaluatePlayerRank)
+evaluationMethodDropdown.config(width = 30)
+evaluationMethodDropdown.place(x = 350, y = 22.5, anchor = 'c')
 
 
 #%%
@@ -503,8 +521,8 @@ for index, row in buildingLocation.iterrows():
 
     buildingLocation.at[index, 'OccupiedPlayer'] = 0
     buildingLocation.at[index, 'isCity'] = False
-    buildingLocation.at[index, 'buildingShapeObj'] = 1
-    buildingLocation.at[index, 'buildingTextObj'] = 1
+    buildingLocation.at[index, 'buildingShapeObj'] = 0
+    buildingLocation.at[index, 'buildingTextObj'] = 0
 
 buildingLocation['OccupiedPlayer'] = buildingLocation['OccupiedPlayer'].astype(int)
 buildingLocation['buildingShapeObj'] = buildingLocation['buildingShapeObj'].astype(int)
@@ -758,41 +776,33 @@ def setupBoard():
 
             for index, row in buildingLocation.iterrows():
                 currentRow = buildingLocation.loc[index]
+                currentHexPlayer = currentRow["OccupiedPlayer"]
 
-                if currentRow["OccupiedPlayer"] != 0:
+                if currentHexPlayer != 0:
 
                     currentHexValue = hexValue(currentRow["Hex1_X"], currentRow["Hex1_Y"])
                     if currentHexValue[0] == resourceType:
                         currentHexResourceValue = currentHexValue[1]
-                        hexPlayer = buildingLocation.loc[index, "OccupiedPlayer"]
+                        econResourceProd += currentHexResourceValue
 
-                        if hexPlayer != 0:
-                            econResourceProd += currentHexResourceValue
-
-                            if hexPlayer == currentActivePlayer:
-                                playerResourceProd += currentHexResourceValue
+                        if currentHexPlayer == currentActivePlayer:
+                            playerResourceProd += currentHexResourceValue
 
                     currentHexValue = hexValue(currentRow["Hex2_X"], currentRow["Hex2_Y"])
                     if currentHexValue[0] == resourceType:
                         currentHexResourceValue = currentHexValue[1]
-                        hexPlayer = buildingLocation.loc[index, "OccupiedPlayer"]
+                        econResourceProd += currentHexResourceValue
 
-                        if hexPlayer != 0:
-                            econResourceProd += currentHexResourceValue
-
-                            if hexPlayer == currentActivePlayer:
-                                playerResourceProd += currentHexResourceValue
+                        if currentHexPlayer == currentActivePlayer:
+                            playerResourceProd += currentHexResourceValue
 
                     currentHexValue = hexValue(currentRow["Hex3_X"], currentRow["Hex3_Y"])
                     if currentHexValue[0] == resourceType:
                         currentHexResourceValue = currentHexValue[1]
-                        hexPlayer = buildingLocation.loc[index, "OccupiedPlayer"]
+                        econResourceProd += currentHexResourceValue
 
-                        if hexPlayer != 0:
-                            econResourceProd += currentHexResourceValue
-
-                            if hexPlayer == currentActivePlayer:
-                                playerResourceProd += currentHexResourceValue
+                        if currentHexPlayer == currentActivePlayer:
+                            playerResourceProd += currentHexResourceValue
 
             playerTotalProd += playerResourceProd
             econTotalProd += econResourceProd
@@ -993,10 +1003,9 @@ def setupPlayerStatsTracker():
         setupPlayerInit(0)
         setupPlayerColor(playerID)
 
+#%% Init game
 setupBoard()
 setupPlayerStatsTracker()
-
-#%% Init game
 colonizer.mainloop()
 
 
