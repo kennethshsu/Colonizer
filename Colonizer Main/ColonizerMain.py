@@ -78,7 +78,39 @@ DebugToggle.place(x = 100, y = 20, anchor = 'c')
 #%% Algorithms to evaluate starting positions
 def evaluatePlayerRank(*args):
     evalMethod = evaluationMethod.get()
-    print("evaluatePlayerRank: ", evalMethod)
+
+    #Getting the Most Resources
+    if evalMethod == evalMethods[0]:
+        playersScore = pd.DataFrame(
+            [
+            float(colonizer.canvas.itemcget(playerStats.loc[1,"resourceTotalProdObj"],"text")[1:6]) if playerStats.loc[1,"inPlay"] else None,
+            float(colonizer.canvas.itemcget(playerStats.loc[2,"resourceTotalProdObj"],"text")[1:6]) if playerStats.loc[2,"inPlay"] else None,
+            float(colonizer.canvas.itemcget(playerStats.loc[3,"resourceTotalProdObj"],"text")[1:6]) if playerStats.loc[3,"inPlay"] else None,
+            float(colonizer.canvas.itemcget(playerStats.loc[4,"resourceTotalProdObj"],"text")[1:6]) if playerStats.loc[4,"inPlay"] else None
+            ],
+            columns =["Score"]
+            )
+    elif evalMethod == evalMethods[1]:
+        playersScore = pd.DataFrame(
+            [
+            float(colonizer.canvas.itemcget(playerStats.loc[1,"resourceTotalProdObj"],"text")[1:6]) if playerStats.loc[1,"inPlay"] else None,
+            float(colonizer.canvas.itemcget(playerStats.loc[2,"resourceTotalProdObj"],"text")[1:6]) if playerStats.loc[2,"inPlay"] else None,
+            float(colonizer.canvas.itemcget(playerStats.loc[3,"resourceTotalProdObj"],"text")[1:6]) if playerStats.loc[3,"inPlay"] else None,
+            float(colonizer.canvas.itemcget(playerStats.loc[4,"resourceTotalProdObj"],"text")[1:6]) if playerStats.loc[4,"inPlay"] else None
+            ],
+            columns =["Score"]
+            )
+
+    playersScore["Rank"] = playersScore.rank(ascending = False)
+    print(playersScore)
+
+    for playerID in [1, 2, 3, 4]:
+        if playerStats.loc[playerID,"inPlay"]:
+            colonizer.canvas.itemconfig(
+                playerStats.loc[playerID, "initPositionScoreObj"],
+                text = "Setup: #" + str(int(playersScore.loc[playerID-1, "Rank"])) + " (" + str(playersScore.loc[playerID-1, "Score"]) + ")"
+                )
+
 
 evalMethods = [
     'Getting the Most Resources',
@@ -88,10 +120,10 @@ evalMethods = [
 
     ]
 evaluationMethod = tk.StringVar()
-evaluationMethod.set("Rank Players with...")
+evaluationMethod.set("Rank Players...")
 evaluationMethodDropdown = tk.OptionMenu(colonizer, evaluationMethod, *evalMethods, command = evaluatePlayerRank)
-evaluationMethodDropdown.config(width = 30)
-evaluationMethodDropdown.place(x = 350, y = 22.5, anchor = 'c')
+evaluationMethodDropdown.config(width = 40)
+evaluationMethodDropdown.place(x = 400, y = 22.5, anchor = 'c')
 
 
 #%%
@@ -161,6 +193,7 @@ playerStats = pd.DataFrame(
         'wheatProdObj': [0, 0, 0, 0, 0],
         'rockProdObj': [0, 0, 0, 0, 0],
         'resourceTotalProdObj': [0, 0, 0, 0, 0],
+        'initPositionScoreObj': [0, 0, 0, 0, 0]
     }
     )
 #%%
@@ -759,28 +792,19 @@ def setupBoard():
                 fill = playerColor[playerStats.loc[buildingLocation.loc[buildingNumber - 1, 'OccupiedPlayer'], 'color']]
                 )
 
-        # update resource production value
-        def hexValue(X_coor, Y_coor):
-            hexResource = hexTiles.loc[(hexTiles['xHexOffset'] == X_coor) & (hexTiles['yHexOffset'] == Y_coor)]['hexResource'].any()
-            if (hexResource == False) | (hexResource == "desert"):
-                return ["No Resource", 0]
-
-            diceNumber = hexTiles.loc[(hexTiles['xHexOffset'] == X_coor) & (hexTiles['yHexOffset'] == Y_coor)]['diceNumber'].item()
-            return [hexResource, diceProb[diceNumber]]
-
         playerTotalProd = 0
         econTotalProd = 0
+        ### can further improve to not loop 5 times
         for resourceType in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
             playerResourceProd = 0
             econResourceProd = 0
 
             for index, row in buildingLocation.iterrows():
-                currentRow = buildingLocation.loc[index]
-                currentHexPlayer = currentRow["OccupiedPlayer"]
+                currentHexPlayer = row["OccupiedPlayer"]
 
                 if currentHexPlayer != 0:
 
-                    currentHexValue = hexValue(currentRow["Hex1_X"], currentRow["Hex1_Y"])
+                    currentHexValue = hexValue(row["Hex1_X"], row["Hex1_Y"])
                     if currentHexValue[0] == resourceType:
                         currentHexResourceValue = currentHexValue[1]
                         econResourceProd += currentHexResourceValue
@@ -788,7 +812,7 @@ def setupBoard():
                         if currentHexPlayer == currentActivePlayer:
                             playerResourceProd += currentHexResourceValue
 
-                    currentHexValue = hexValue(currentRow["Hex2_X"], currentRow["Hex2_Y"])
+                    currentHexValue = hexValue(row["Hex2_X"], row["Hex2_Y"])
                     if currentHexValue[0] == resourceType:
                         currentHexResourceValue = currentHexValue[1]
                         econResourceProd += currentHexResourceValue
@@ -796,7 +820,7 @@ def setupBoard():
                         if currentHexPlayer == currentActivePlayer:
                             playerResourceProd += currentHexResourceValue
 
-                    currentHexValue = hexValue(currentRow["Hex3_X"], currentRow["Hex3_Y"])
+                    currentHexValue = hexValue(row["Hex3_X"], row["Hex3_Y"])
                     if currentHexValue[0] == resourceType:
                         currentHexResourceValue = currentHexValue[1]
                         econResourceProd += currentHexResourceValue
@@ -817,6 +841,15 @@ def setupBoard():
         currentActivePlayer = None
 
 #%%
+# update resource production value, returns an array [resource, probability], of the hex
+def hexValue(X_coor, Y_coor):
+    hexResource = hexTiles.loc[(hexTiles['xHexOffset'] == X_coor) & (hexTiles['yHexOffset'] == Y_coor)]['hexResource'].any()
+    if (hexResource == False) | (hexResource == "desert"):
+        return ["No Resource", 0]
+
+    diceNumber = hexTiles.loc[(hexTiles['xHexOffset'] == X_coor) & (hexTiles['yHexOffset'] == Y_coor)]['diceNumber'].item()
+    return [hexResource, diceProb[diceNumber]]
+
 # To increment and decrement resources
 def resourceIncrement(playerID, resourceType):
     if playerStats.at[0, resourceType] > 0:
@@ -857,16 +890,16 @@ def setupPlayerStatsTracker():
 
         #Building the resource box with button and commands
         colonizer.canvas.create_polygon(
-            [top_left_x + 200 + resourceOffset[resourceType] * 70, top_left_y + 5,
-             top_left_x + 250 + resourceOffset[resourceType] * 70, top_left_y + 5,
-             top_left_x + 250 + resourceOffset[resourceType] * 70, top_left_y + 85,
-             top_left_x + 200 + resourceOffset[resourceType] * 70, top_left_y + 85],
+            [top_left_x + 230 + resourceOffset[resourceType] * 70, top_left_y + 5,
+             top_left_x + 280 + resourceOffset[resourceType] * 70, top_left_y + 5,
+             top_left_x + 280 + resourceOffset[resourceType] * 70, top_left_y + 85,
+             top_left_x + 230 + resourceOffset[resourceType] * 70, top_left_y + 85],
             outline = '#000000',
             fill = resourceColor[resourceType],
             tags = "PlayerID"+str(playerID)+"Resource"+resourceType
             )
         playerStats.at[playerID, resourceType+"Obj"] = colonizer.canvas.create_text(
-            playerBoraderTopLeftCoord(playerID)[0] + 225 + resourceOffset[resourceType] * 70,
+            playerBoraderTopLeftCoord(playerID)[0] + (230+280)/2 + resourceOffset[resourceType] * 70,
             playerBoraderTopLeftCoord(playerID)[1] + 25,
             text = playerStats.at[playerID, resourceType],
             anchor = 'c',
@@ -884,7 +917,7 @@ def setupPlayerStatsTracker():
 
         #Production value
         playerStats.at[playerID, resourceType+"ProdObj"] = colonizer.canvas.create_text(
-            playerBoraderTopLeftCoord(playerID)[0] + 225 + resourceOffset[resourceType] * 70,
+            playerBoraderTopLeftCoord(playerID)[0] + (230+280)/2 + resourceOffset[resourceType] * 70,
             playerBoraderTopLeftCoord(playerID)[1] + 45,
             text = "+0.000",
             anchor = 'c',
@@ -934,16 +967,16 @@ def setupPlayerStatsTracker():
             'Dev_Card': 3
             }
         colonizer.canvas.create_polygon(
-            [playerBoraderTopLeftCoord(playerID)[0] + 10, playerBoraderTopLeftCoord(playerID)[1] + 35 + itemOffset[item] * 35,
-              playerBoraderTopLeftCoord(playerID)[0] + 90, playerBoraderTopLeftCoord(playerID)[1] + 35 + itemOffset[item] * 35,
-              playerBoraderTopLeftCoord(playerID)[0] + 90, playerBoraderTopLeftCoord(playerID)[1] + 65 + itemOffset[item] * 35,
-              playerBoraderTopLeftCoord(playerID)[0] + 10, playerBoraderTopLeftCoord(playerID)[1] + 65 + itemOffset[item] * 35],
+            [playerBoraderTopLeftCoord(playerID)[0] + 110, playerBoraderTopLeftCoord(playerID)[1] + 35 + itemOffset[item] * 35,
+              playerBoraderTopLeftCoord(playerID)[0] + 190, playerBoraderTopLeftCoord(playerID)[1] + 35 + itemOffset[item] * 35,
+              playerBoraderTopLeftCoord(playerID)[0] + 190, playerBoraderTopLeftCoord(playerID)[1] + 65 + itemOffset[item] * 35,
+              playerBoraderTopLeftCoord(playerID)[0] + 110, playerBoraderTopLeftCoord(playerID)[1] + 65 + itemOffset[item] * 35],
             outline = '#000000',
             fill = playerColor[playerStats.loc[playerID, 'color']],
             tags = "PlayerID"+str(playerID)+"Purchase"+item
             )
         colonizer.canvas.create_text(
-            playerBoraderTopLeftCoord(playerID)[0] + 50,
+            playerBoraderTopLeftCoord(playerID)[0] + (110+190)/2,
             playerBoraderTopLeftCoord(playerID)[1] + (35+65)/2 + itemOffset[item] * 35,
             text = item if item != 'Dev_Card' else 'Dev Card',
             anchor = 'c',
@@ -960,33 +993,42 @@ def setupPlayerStatsTracker():
             for item in ['Road', 'Settlement', 'City', 'Dev_Card']:
                 setupPurchaseTiles(playerID, item)
 
+            playerStats.at[playerID, "initPositionScoreObj"] = colonizer.canvas.create_text(
+                playerBoraderTopLeftCoord(playerID)[0] + (10+90)/2,
+                playerBoraderTopLeftCoord(playerID)[1] + 45,
+                text = "",
+                anchor = 'c',
+                font=("Helvetica", 12)
+                )
+
         #Resource trackers
         for resourceType in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
             setupResourceButton(playerID, resourceType)
 
         #Total resource
         colonizer.canvas.create_polygon(
-            [playerBoraderTopLeftCoord(playerID)[0] + 200 + 5 * 70, playerBoraderTopLeftCoord(playerID)[1] + 5,
-             playerBoraderTopLeftCoord(playerID)[0] + 250 + 5 * 70, playerBoraderTopLeftCoord(playerID)[1] + 5,
-             playerBoraderTopLeftCoord(playerID)[0] + 250 + 5 * 70, playerBoraderTopLeftCoord(playerID)[1] + 85,
-             playerBoraderTopLeftCoord(playerID)[0] + 200 + 5 * 70, playerBoraderTopLeftCoord(playerID)[1] + 85],
+            [playerBoraderTopLeftCoord(playerID)[0] + 230 + 5 * 70, playerBoraderTopLeftCoord(playerID)[1] + 5,
+             playerBoraderTopLeftCoord(playerID)[0] + 280 + 5 * 70, playerBoraderTopLeftCoord(playerID)[1] + 5,
+             playerBoraderTopLeftCoord(playerID)[0] + 280 + 5 * 70, playerBoraderTopLeftCoord(playerID)[1] + 85,
+             playerBoraderTopLeftCoord(playerID)[0] + 230 + 5 * 70, playerBoraderTopLeftCoord(playerID)[1] + 85],
             outline = '#000000',
             fill = '#4371FF'
             )
         playerStats.at[playerID, "resourceTotalObj"] = colonizer.canvas.create_text(
-            playerBoraderTopLeftCoord(playerID)[0] + 225 + 5 * 70,
+            playerBoraderTopLeftCoord(playerID)[0] + (230+280)/2 + 5 * 70,
             playerBoraderTopLeftCoord(playerID)[1] + 25,
             text = "" if playerID == 0 else "0",
             anchor = 'c',
             font=("Helvetica", 16)
             )
         playerStats.at[playerID, "resourceTotalProdObj"] = colonizer.canvas.create_text(
-            playerBoraderTopLeftCoord(playerID)[0] + 225 + 5 * 70,
+            playerBoraderTopLeftCoord(playerID)[0] + (230+280)/2 + 5 * 70,
             playerBoraderTopLeftCoord(playerID)[1] + 45,
             text = "+0.000",
             anchor = 'c',
             font=("Helvetica", 12)
             )
+
 
     for playerID in [0, 1, 2, 3, 4]:
         #Build bank & players' borders
