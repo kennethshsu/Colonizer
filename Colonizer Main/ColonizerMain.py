@@ -65,7 +65,8 @@ def toggleDebugMode():
                 )
             colonizer.canvas.itemconfig(
                 buildingLocation.at[index, 'buildingShapeObj'],
-                fill = "#FFFFFF" if buildingLocation.loc[index, 'OccupiedPlayer'] == 0 else playerColor[playerStats.loc[buildingLocation.loc[index, 'OccupiedPlayer'], 'color']]
+                fill = "#FFFFFF" if buildingLocation.loc[index, 'OccupiedPlayer'] == 0
+                    else playerColor[playerStats.loc[buildingLocation.loc[index, 'OccupiedPlayer'], 'color']]
                 )
 
 DebugToggle = tk.Button(
@@ -80,17 +81,16 @@ def evaluatePlayerRank(*args):
     evalMethod = evaluationMethod.get()
 
     playerRank = pd.DataFrame({"playerID": [0,1,2,3,4]})
+    for resourceType in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
+        playerRank[resourceType + "Prod"] = playerStats[(playerStats["playerID"] != 0) & (playerStats["inPlay"])][resourceType + "Prod"]
+        playerRank["totalProd"] = playerStats[(playerStats["playerID"] != 0) & (playerStats["inPlay"])]["totalProd"]
 
     #Getting the Most Resources: highest probability
     if evalMethod == evalMethods[0]:
-        playerRank["score"] = playerStats[(playerStats["playerID"] != 0) & (playerStats["inPlay"])]["totalProd"]
+        playerRank["score"] = playerRank["totalProd"]
 
     #Getting the Most & Diverse Resources (Sharpe Ratio): highest probability & lower variance across resources
     elif evalMethod == evalMethods[1]:
-        for resourceType in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
-            playerRank[resourceType + "Prod"] = playerStats[(playerStats["playerID"] != 0) & (playerStats["inPlay"])][resourceType + "Prod"]
-
-        playerRank["totalProd"] = playerStats[(playerStats["playerID"] != 0) & (playerStats["inPlay"])]["totalProd"]
         playerRank["resourceSTD"] = playerRank.iloc[0:5,1:6].std(axis = 1, ddof = 0) #using population variance
         playerRank["score"] = (playerRank["totalProd"]/5)/playerRank["resourceSTD"]
 
@@ -841,11 +841,17 @@ def setupBoard():
 
             # update the specific resource production for the player
             playerStats.loc[currentActivePlayer, resourceType + "Prod"] = econResourceProd
-            colonizer.canvas.itemconfig(playerStats.loc[currentActivePlayer, resourceType+"ProdObj"], text = "+" + "{0:0.3f}".format(playerResourceProd))
+            colonizer.canvas.itemconfig(
+                playerStats.loc[currentActivePlayer, resourceType+"ProdObj"],
+                text = "+" + "{0:0.3f}".format(playerResourceProd)
+                )
 
             # update the total resource production for the player
             playerStats.loc[currentActivePlayer, "totalProd"] = playerTotalProd
-            colonizer.canvas.itemconfig(playerStats.loc[currentActivePlayer, "resourceTotalProdObj"], text = "+" + "{0:0.3f}".format(playerTotalProd))
+            colonizer.canvas.itemconfig(
+                playerStats.loc[currentActivePlayer, "resourceTotalProdObj"],
+                text = "+" + "{0:0.3f}".format(playerTotalProd)
+                )
 
             # update the total economy resource productions for all players combined
             colonizer.canvas.itemconfig(playerStats.loc[0, resourceType+"ProdObj"], text = "+" + "{0:0.3f}".format(econResourceProd))
