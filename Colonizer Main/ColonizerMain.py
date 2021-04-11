@@ -79,36 +79,38 @@ DebugToggle.place(x = 100, y = 20, anchor = 'c')
 def evaluatePlayerRank(*args):
     evalMethod = evaluationMethod.get()
 
-    #Getting the Most Resources
-    if evalMethod == evalMethods[0]:
-        playersScore = pd.DataFrame(
-            [
-            float(colonizer.canvas.itemcget(playerStats.loc[1,"resourceTotalProdObj"],"text")[1:6]) if playerStats.loc[1,"inPlay"] else None,
-            float(colonizer.canvas.itemcget(playerStats.loc[2,"resourceTotalProdObj"],"text")[1:6]) if playerStats.loc[2,"inPlay"] else None,
-            float(colonizer.canvas.itemcget(playerStats.loc[3,"resourceTotalProdObj"],"text")[1:6]) if playerStats.loc[3,"inPlay"] else None,
-            float(colonizer.canvas.itemcget(playerStats.loc[4,"resourceTotalProdObj"],"text")[1:6]) if playerStats.loc[4,"inPlay"] else None
-            ],
-            columns =["Score"]
-            )
-    elif evalMethod == evalMethods[1]:
-        playersScore = pd.DataFrame(
-            [
-            float(colonizer.canvas.itemcget(playerStats.loc[1,"resourceTotalProdObj"],"text")[1:6]) if playerStats.loc[1,"inPlay"] else None,
-            float(colonizer.canvas.itemcget(playerStats.loc[2,"resourceTotalProdObj"],"text")[1:6]) if playerStats.loc[2,"inPlay"] else None,
-            float(colonizer.canvas.itemcget(playerStats.loc[3,"resourceTotalProdObj"],"text")[1:6]) if playerStats.loc[3,"inPlay"] else None,
-            float(colonizer.canvas.itemcget(playerStats.loc[4,"resourceTotalProdObj"],"text")[1:6]) if playerStats.loc[4,"inPlay"] else None
-            ],
-            columns =["Score"]
-            )
+    playerRank = pd.DataFrame({"playerID": [0,1,2,3,4]})
 
-    playersScore["Rank"] = playersScore.rank(ascending = False)
-    print(playersScore)
+    #Getting the Most Resources: highest probability
+    if evalMethod == evalMethods[0]:
+        playerRank["score"] = playerStats[(playerStats["playerID"] != 0) & (playerStats["inPlay"])]["totalProd"]
+
+    #Getting the Most & Diverse Resources (Sharpe Ratio): highest probability & lower variance across resources
+    elif evalMethod == evalMethods[1]:
+        for resourceType in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
+            playerRank[resourceType + "Prod"] = playerStats[(playerStats["playerID"] != 0) & (playerStats["inPlay"])][resourceType + "Prod"]
+
+        playerRank["totalProd"] = playerStats[(playerStats["playerID"] != 0) & (playerStats["inPlay"])]["totalProd"]
+        playerRank["resourceSTD"] = playerRank.iloc[0:5,1:6].std(axis = 1, ddof = 0) #using population variance
+        playerRank["score"] = (playerRank["totalProd"]/5)/playerRank["resourceSTD"]
+
+    #Getting the Most Rare Resources: based on probability & scarcity of resources on board
+    elif evalMethod == evalMethods[2]:
+        return
+
+    #Getting the Most Rarely Produced Resources: based on probability & scarcity of resources occupied by players
+    elif evalMethod == evalMethods[3]:
+        return
+
+    #Print rankings
+    playerRank["rank"] = playerRank["score"].rank(ascending = False)
+    print(playerRank)
 
     for playerID in [1, 2, 3, 4]:
         if playerStats.loc[playerID,"inPlay"]:
             colonizer.canvas.itemconfig(
                 playerStats.loc[playerID, "initPositionScoreObj"],
-                text = "Setup: #" + str(int(playersScore.loc[playerID-1, "Rank"])) + " (" + str(playersScore.loc[playerID-1, "Score"]) + ")"
+                text = "Rank: " + str(int(playerRank.loc[playerID, "rank"])) + " (" +  "{0:0.3f}".format(playerRank.loc[playerID, "score"]) + ")"
                 )
 
 
@@ -164,7 +166,7 @@ diceProb = {
 # Keep track of players
 playerStats = pd.DataFrame(
     {
-        'Player': [0, 1, 2, 3, 4],
+        'playerID': [0, 1, 2, 3, 4],
         'color': ['white', 'white', 'white', 'white', 'white'],
         'inPlay': [True, False, False, False, False],
         'knownVictoryPoints': [0, 0, 0, 0, 0],
@@ -181,6 +183,12 @@ playerStats = pd.DataFrame(
         'sheep': [19, 0, 0, 0, 0],
         'wheat': [19, 0, 0, 0, 0],
         'rock': [19, 0, 0, 0, 0],
+        'woodProd': [0, 0, 0, 0, 0],
+        'brickProd': [0, 0, 0, 0, 0],
+        'sheepProd': [0, 0, 0, 0, 0],
+        'wheatProd': [0, 0, 0, 0, 0],
+        'rockProd': [0, 0, 0, 0, 0],
+        'totalProd': [0, 0, 0, 0, 0],
         'woodObj': [0, 0, 0, 0, 0],
         'brickObj': [0, 0, 0, 0, 0],
         'sheepObj': [0, 0, 0, 0, 0],
@@ -831,11 +839,17 @@ def setupBoard():
             playerTotalProd += playerResourceProd
             econTotalProd += econResourceProd
 
-            # update the production power
+            # update the specific resource production for the player
+            playerStats.loc[currentActivePlayer, resourceType + "Prod"] = econResourceProd
+            colonizer.canvas.itemconfig(playerStats.loc[currentActivePlayer, resourceType+"ProdObj"], text = "+" + "{0:0.3f}".format(playerResourceProd))
+
+            # update the total resource production for the player
+            playerStats.loc[currentActivePlayer, "totalProd"] = playerTotalProd
+            colonizer.canvas.itemconfig(playerStats.loc[currentActivePlayer, "resourceTotalProdObj"], text = "+" + "{0:0.3f}".format(playerTotalProd))
+
+            # update the total economy resource productions for all players combined
             colonizer.canvas.itemconfig(playerStats.loc[0, resourceType+"ProdObj"], text = "+" + "{0:0.3f}".format(econResourceProd))
             colonizer.canvas.itemconfig(playerStats.loc[0, "resourceTotalProdObj"], text = "+" + "{0:0.3f}".format(econTotalProd))
-            colonizer.canvas.itemconfig(playerStats.loc[currentActivePlayer, resourceType+"ProdObj"], text = "+" + "{0:0.3f}".format(playerResourceProd))
-            colonizer.canvas.itemconfig(playerStats.loc[currentActivePlayer, "resourceTotalProdObj"], text = "+" + "{0:0.3f}".format(playerTotalProd))
 
         currentAction = None
         currentActivePlayer = None
