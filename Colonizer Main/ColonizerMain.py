@@ -22,6 +22,8 @@ currentActivePlayer = 0
 currentAction = None
 #%%
 # Debugger
+pd.set_option('display.max_rows', None, 'display.max_columns', None)
+
 debugMode = False
 debugMsg = ['Enable Debug Mode', 'Disable Debug Mode']
 
@@ -83,7 +85,8 @@ def evaluatePlayerRank(*args):
     playerRank = pd.DataFrame({"playerID": [0,1,2,3,4]})
     for resourceType in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
         playerRank[resourceType + "Prod"] = playerStats[(playerStats["playerID"] != 0) & (playerStats["inPlay"])][resourceType + "Prod"]
-        playerRank["totalProd"] = playerStats[(playerStats["playerID"] != 0) & (playerStats["inPlay"])]["totalProd"]
+
+    playerRank["totalProd"] = playerStats[(playerStats["playerID"] != 0) & (playerStats["inPlay"])]["totalProd"]
 
     #Getting the Most Resources: highest probability
     if evalMethod == evalMethods[0]:
@@ -91,15 +94,52 @@ def evaluatePlayerRank(*args):
 
     #Getting the Most & Diverse Resources (Sharpe Ratio): highest probability & lower variance across resources
     elif evalMethod == evalMethods[1]:
-        playerRank["resourceSTD"] = playerRank.iloc[0:5,1:6].std(axis = 1, ddof = 0) #using population variance
+        playerRank["resourceSTD"] = playerRank.loc[
+            :,
+            ['woodProd', 'brickProd', 'sheepProd', 'wheatProd', 'rockProd']
+            ].std(axis = 1, ddof = 0) #using population variance
         playerRank["score"] = (playerRank["totalProd"]/5)/playerRank["resourceSTD"]
 
-    #Getting the Most Rare Resources: based on probability & scarcity of resources on board
+    #Getting the Most Rare Resources by Tiles: based on number of tiles available to determine scarcity
     elif evalMethod == evalMethods[2]:
-        return
+        resourceScarcity = pd.DataFrame(
+            {
+                'resource': ['wood', 'brick', 'sheep', 'wheat', 'rock'],
+                'scarcity': [4.0, 3.0, 4.0, 4.0, 3.0],
+            }
+        )
+        resourceScarcity['scarcity'] = 1/(resourceScarcity['scarcity']/resourceScarcity['scarcity'].mean())
+        resourceScarcity = resourceScarcity.set_index("resource")
+
+        playerRank["score"] = 0
+        for resourceType in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
+            playerRank["score"] += playerStats[
+                (playerStats["playerID"] != 0) & (playerStats["inPlay"])
+                ][resourceType + "Prod"] * resourceScarcity.loc[resourceType,'scarcity']
+
+    #Getting the Most Rare Resources by Tiles' Probability: based on probability of tiles to determine scarcity
+    elif evalMethod == evalMethods[3]:
+        resourceScarcity = pd.DataFrame(
+            {
+                'resource': ['wood', 'brick', 'sheep', 'wheat', 'rock'],
+                'scarcity': [0.0, 0.0, 0.0, 0.0, 0.0],
+            }
+        )
+        resourceScarcity = resourceScarcity.set_index("resource")
+
+        for index, row in hexTiles.iterrows():
+            if row["hexResource"] != "desert":
+                resourceScarcity.loc[row["hexResource"], "scarcity"] += diceProb[row["diceNumber"]]
+
+        resourceScarcity['scarcity'] = 1/(resourceScarcity['scarcity']/resourceScarcity['scarcity'].mean())
+        playerRank["score"] = 0
+        for resourceType in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
+            playerRank["score"] += playerStats[
+                (playerStats["playerID"] != 0) & (playerStats["inPlay"])
+                ][resourceType + "Prod"] * resourceScarcity.loc[resourceType,'scarcity']
 
     #Getting the Most Rarely Produced Resources: based on probability & scarcity of resources occupied by players
-    elif evalMethod == evalMethods[3]:
+    elif evalMethod == evalMethods[4]:
         return
 
     #Print rankings
@@ -110,17 +150,21 @@ def evaluatePlayerRank(*args):
         if playerStats.loc[playerID,"inPlay"]:
             colonizer.canvas.itemconfig(
                 playerStats.loc[playerID, "initPositionScoreObj"],
-                text = "Rank: " + str(int(playerRank.loc[playerID, "rank"])) + " (" +  "{0:0.3f}".format(playerRank.loc[playerID, "score"]) + ")"
+                text = "Rank: " + str(
+                    int(playerRank.loc[playerID, "rank"]))
+                    + " ("
+                    + "{0:0.3f}".format(playerRank.loc[playerID, "score"])
+                    + ")"
                 )
-
 
 evalMethods = [
     'Getting the Most Resources',
     'Getting the Most & Diverse Resources (Sharpe Ratio)',
-    'Getting the Most Rare Resources',
+    'Getting the Most Rare Resources by Tiles Available',
+    'Getting the Most Rare Resources by Tiles\' Probability',
     'Getting the Most Rarely Produced Resources',
-
     ]
+
 evaluationMethod = tk.StringVar()
 evaluationMethod.set("Rank Players...")
 evaluationMethodDropdown = tk.OptionMenu(colonizer, evaluationMethod, *evalMethods, command = evaluatePlayerRank)
@@ -580,16 +624,8 @@ resourceEconValue = {
 
 # Calcuate the scarcity of each resource
 for index, row in hexTiles.iterrows():
-    if row['hexResource'] == "wood":
-        resourceEconValue['wood'] += diceProb[row['diceNumber']]
-    elif row['hexResource'] == "brick":
-        resourceEconValue['brick'] += diceProb[row['diceNumber']]
-    elif row['hexResource'] == "sheep":
-        resourceEconValue['sheep'] += diceProb[row['diceNumber']]
-    elif row['hexResource'] == "wheat":
-        resourceEconValue['wheat'] += diceProb[row['diceNumber']]
-    elif row['hexResource'] == "rock":
-        resourceEconValue['rock'] += diceProb[row['diceNumber']]
+    if row['hexResource']!= "desert":
+        resourceEconValue[row['hexResource']] += diceProb[row['diceNumber']]
 
 for index, row in buildingLocation.iterrows():
     buildingLocValue = 0
