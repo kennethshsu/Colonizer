@@ -83,6 +83,7 @@ def evaluatePlayerRank(*args):
     evalMethod = evaluationMethod.get()
 
     playerRank = pd.DataFrame({"playerID": [0,1,2,3,4]})
+
     for resourceType in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
         playerRank[resourceType + "Prod"] = playerStats[(playerStats["playerID"] != 0) & (playerStats["inPlay"])][resourceType + "Prod"]
 
@@ -132,6 +133,7 @@ def evaluatePlayerRank(*args):
                 resourceScarcity.loc[row["hexResource"], "scarcity"] += diceProb[row["diceNumber"]]
 
         resourceScarcity['scarcity'] = 1/(resourceScarcity['scarcity']/resourceScarcity['scarcity'].mean())
+
         playerRank["score"] = 0
         for resourceType in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
             playerRank["score"] += playerStats[
@@ -140,7 +142,26 @@ def evaluatePlayerRank(*args):
 
     #Getting the Most Rarely Produced Resources: based on probability & scarcity of resources occupied by players
     elif evalMethod == evalMethods[4]:
-        return
+        resourceScarcity = pd.DataFrame(
+            {
+                'resource': ['wood', 'brick', 'sheep', 'wheat', 'rock'],
+                'scarcity': [0.0, 0.0, 0.0, 0.0, 0.0],
+            }
+        )
+        resourceScarcity = resourceScarcity.set_index("resource")
+
+        for resourceType in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
+            resourceScarcity.loc[resourceType, "scarcity"] = playerStats.loc[0,resourceType + "Prod"]
+
+        resourceScarcity['scarcity'] = 1/(resourceScarcity['scarcity']/resourceScarcity['scarcity'].mean())
+
+        playerRank["score"] = 0
+        for resourceType in ['wood', 'brick', 'sheep', 'wheat', 'rock']:
+            playerRank["score"] += playerStats[
+                (playerStats["playerID"] != 0) & (playerStats["inPlay"])
+                ][resourceType + "Prod"] * (
+                    resourceScarcity.loc[resourceType,'scarcity'] if not np.isinf(resourceScarcity.loc[resourceType,'scarcity']) else 0
+                    )
 
     #Print rankings
     playerRank["rank"] = playerRank["score"].rank(ascending = False)
@@ -876,22 +897,28 @@ def setupBoard():
             econTotalProd += econResourceProd
 
             # update the specific resource production for the player
-            playerStats.loc[currentActivePlayer, resourceType + "Prod"] = econResourceProd
+            playerStats.loc[currentActivePlayer, resourceType + "Prod"] = playerResourceProd
             colonizer.canvas.itemconfig(
                 playerStats.loc[currentActivePlayer, resourceType+"ProdObj"],
                 text = "+" + "{0:0.3f}".format(playerResourceProd)
                 )
 
-            # update the total resource production for the player
-            playerStats.loc[currentActivePlayer, "totalProd"] = playerTotalProd
-            colonizer.canvas.itemconfig(
-                playerStats.loc[currentActivePlayer, "resourceTotalProdObj"],
-                text = "+" + "{0:0.3f}".format(playerTotalProd)
-                )
-
-            # update the total economy resource productions for all players combined
+            # update all resources production for all players combined
+            playerStats.loc[0, resourceType + "Prod"] = econResourceProd
             colonizer.canvas.itemconfig(playerStats.loc[0, resourceType+"ProdObj"], text = "+" + "{0:0.3f}".format(econResourceProd))
-            colonizer.canvas.itemconfig(playerStats.loc[0, "resourceTotalProdObj"], text = "+" + "{0:0.3f}".format(econTotalProd))
+
+        # update the total resource production for the player
+        playerStats.loc[currentActivePlayer, "totalProd"] = playerTotalProd
+        colonizer.canvas.itemconfig(
+            playerStats.loc[currentActivePlayer, "resourceTotalProdObj"],
+            text = "+" + "{0:0.3f}".format(playerTotalProd)
+            )
+
+        # update all resources production for all players combined
+        playerStats.loc[0, "totalProd"] = econTotalProd
+        colonizer.canvas.itemconfig(playerStats.loc[0, "resourceTotalProdObj"], text = "+" + "{0:0.3f}".format(econTotalProd))
+
+        print("playerStats:", playerStats)
 
         currentAction = None
         currentActivePlayer = None
