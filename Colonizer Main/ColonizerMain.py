@@ -25,7 +25,7 @@ colonizer = tk.Tk()
 colonizer.canvas = tk.Canvas(width=gameWindowWidth, height=gameWindowHeight)
 colonizer.title("Colonizer - Game " + str(gameID))
 colonizer.canvas.pack()
-colonizer.focus_force() # forces the window to be at the top and focused
+colonizer.focus_force()  # forces the window to be at the top and focused
 
 # Useful global variables
 currentRoll = 0
@@ -260,14 +260,27 @@ playerColor = {
 }
 
 # Dice probability
-diceRoll = pd.DataFrame({
-    "roll": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, ],
-    "prob": [1 / 36, 2 / 36, 3 / 36, 4 / 36, 5 / 36, 6 / 36,
-             5 / 36, 4 / 36, 3 / 36, 2 / 36, 1 / 36, ],
-    "rolledThisGame": 0,
-    "rollStats1TextObj": 0,
-    "rollStats2TextObj": 0,
-})
+diceRoll = pd.DataFrame(
+    {
+        "roll": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,],
+        "prob": [
+            1 / 36,
+            2 / 36,
+            3 / 36,
+            4 / 36,
+            5 / 36,
+            6 / 36,
+            5 / 36,
+            4 / 36,
+            3 / 36,
+            2 / 36,
+            1 / 36,
+        ],
+        "rolledThisGame": 0,
+        "rollStats1TextObj": 0,
+        "rollStats2TextObj": 0,
+    }
+)
 diceRoll = diceRoll.set_index("roll")
 
 # Keep track of players
@@ -402,8 +415,8 @@ diceOrderRing1 = pd.DataFrame.append(
 # The order of hexes on the middle ring, followed by the first hex
 diceOrderRing2 = pd.DataFrame([[-1, -2], [1, -2], [2, 0], [1, 2], [-1, 2], [-2, 0]])
 diceOrderRing2 = pd.DataFrame.append(
-    diceOrderRing2.iloc[int(diceSetupHexOffset / 2):6],
-    diceOrderRing2.iloc[0:int(diceSetupHexOffset / 2)],
+    diceOrderRing2.iloc[int(diceSetupHexOffset / 2) : 6],
+    diceOrderRing2.iloc[0 : int(diceSetupHexOffset / 2)],
 )
 
 diceOrderRing3 = pd.DataFrame([[0, 0]])
@@ -691,7 +704,7 @@ for index, row in buildingLocation.iterrows():
         ]
 
         if not currentTile.empty:
-            currentTile = currentTile.iloc[0] # convert from dataframe to an array
+            currentTile = currentTile.iloc[0]  # convert from dataframe to an array
 
         if currentTile.empty:
             buildingLocValue += 0
@@ -700,9 +713,7 @@ for index, row in buildingLocation.iterrows():
         else:
             currentTileProb = diceRoll.loc[currentTile["diceNumber"], "prob"]
             buildingLocValue += (
-                1
-                / resourceEconValue[currentTile["hexResource"]]
-                * currentTileProb
+                1 / resourceEconValue[currentTile["hexResource"]] * currentTileProb
             )
 
     buildingLocation.at[index, "LocValue"] = buildingLocValue
@@ -718,30 +729,29 @@ def SetupBoard():
         print(
             hexTiles.loc[hexIndex, "diceNumber"],
             hexTiles.loc[hexIndex, "hexResource"],
-            "clicked"
+            "clicked",
         )
 
         if resolveRobberPending:
             # remove the current robber
-            currentRobberDF = hexTiles.loc[hexTiles.loc[:, "robberOccupied"],]
+            currentRobberDF = hexTiles.loc[
+                hexTiles.loc[:, "robberOccupied"],
+            ]
             for index, row in currentRobberDF.iterrows():
                 colonizer.canvas.itemconfig(
-                    row["robberShapeObj"],
-                    fill = "",
+                    row["robberShapeObj"], fill="",
                 )
             hexTiles.loc[hexTiles.loc[:, "robberOccupied"], "robberOccupied"] = False
 
             # moving the robber to new location
             hexTiles.loc[hexIndex, "robberOccupied"] = True
             colonizer.canvas.itemconfig(
-                hexTiles.loc[hexIndex, "robberShapeObj"],
-                fill = "#464646",
+                hexTiles.loc[hexIndex, "robberShapeObj"], fill="#464646",
             )
 
             resolveRobberPending = False
             # print(hexTiles)
             # need to implement stealing here
-
 
     def LoadHex(hexResource, xHexOffset, yHexOffset, diceNumber, index):
         # Calculate the center of each hex tile
@@ -766,37 +776,45 @@ def SetupBoard():
             yHexCenter + radius / 2,
         ]
         hexTiles.at[index, "hexShapeObj"] = colonizer.canvas.create_polygon(
-            points, outline="#000000", fill=resourceColor[hexResource], width=2,
+            points,
+            outline="#000000",
+            fill=resourceColor[hexResource],
+            width=2,
             tags="Hex" + str(index),
         )
 
         # This is the dice roll number
         hexTiles.at[index, "diceTextObj"] = colonizer.canvas.create_text(
-            xHexCenter, yHexCenter,
+            xHexCenter,
+            yHexCenter,
             text=str(diceNumber) if diceNumber != 7 else "",
             font=("Helvetica", 32),
-            fill = "#000000",
+            fill="#000000",
             tags="Hex" + str(index),
         )
 
         # This is the hex location coordinates
         hexTiles.at[index, "hexCoordTextObj"] = colonizer.canvas.create_text(
-            xHexCenter, yHexCenter + radius / 3.5, text="", font=("Helvetica", 10),
+            xHexCenter,
+            yHexCenter + radius / 3.5,
+            text="",
+            font=("Helvetica", 10),
             tags="Hex" + str(index),
         )
 
         # This is the robber circle
         hexTiles.at[index, "robberShapeObj"] = colonizer.canvas.create_oval(
-            xHexCenter-radius/7, yHexCenter-radius/7,
-            xHexCenter-radius/1.5, yHexCenter-radius/1.5,
-            fill='#464646' if diceNumber == 7 else "",
-            outline = "", tags="Hex" + str(index)
+            xHexCenter - radius / 7,
+            yHexCenter - radius / 7,
+            xHexCenter - radius / 1.5,
+            yHexCenter - radius / 1.5,
+            fill="#464646" if diceNumber == 7 else "",
+            outline="",
+            tags="Hex" + str(index),
         )
 
         colonizer.canvas.tag_bind(
-            "Hex" + str(index),
-            "<Button-1>",
-            lambda event: HexClicked(index),
+            "Hex" + str(index), "<Button-1>", lambda event: HexClicked(index),
         )
 
     # Setting up hex by hex, row by row from upper left tile
@@ -904,57 +922,53 @@ def SetupBoard():
         totalRollsThisGame = diceRoll["rolledThisGame"].sum()
         # update total roll number
         colonizer.canvas.itemconfig(
-            rollNumberObj,
-            text="Roll: " + str(totalRollsThisGame),
+            rollNumberObj, text="Roll: " + str(totalRollsThisGame),
         )
 
         # update each dice roll's statistics
         for number in range(2, 13):
             actualRolls = diceRoll.loc[number, "rolledThisGame"]
-            actualRollsPct = diceRoll.loc[number, "rolledThisGame"] / totalRollsThisGame*100
-            expectedRolls = diceRoll.loc[number, "prob"]*totalRollsThisGame
-            expectedRollsPct = diceRoll.loc[number, "prob"]*100
+            actualRollsPct = (
+                diceRoll.loc[number, "rolledThisGame"] / totalRollsThisGame * 100
+            )
+            expectedRolls = diceRoll.loc[number, "prob"] * totalRollsThisGame
+            expectedRollsPct = diceRoll.loc[number, "prob"] * 100
 
             colonizer.canvas.itemconfig(
                 diceRoll.loc[number, "rollStats1TextObj"],
-                text=
-                    "("
-                    + "{0:0.1f}".format(expectedRolls)
-                    + " - "
-                    + "{0:0.1f}".format(expectedRollsPct)
-                    + "%)"
+                text="("
+                + "{0:0.1f}".format(expectedRolls)
+                + " - "
+                + "{0:0.1f}".format(expectedRollsPct)
+                + "%)",
             )
             colonizer.canvas.itemconfig(
                 diceRoll.loc[number, "rollStats2TextObj"],
-                text=
-                    str(actualRolls)
-                    + " - "
-                    "{0:0.1f}".format(actualRollsPct)
-                    + "%",
+                text=str(actualRolls) + " - " "{0:0.1f}".format(actualRollsPct) + "%",
             )
-
-
 
     def SetupDiceRoll(diceNumber):
         # Build bank & players' borders
-        diceXCenter = xBoardCenter + (radius + gapSize) * 6 + gapSize*2
-        diceYCenter = gameWindowHeight/2 + (gameWindowHeight/13 + gapSize) * (diceNumber-7)
+        diceXCenter = xBoardCenter + (radius + gapSize) * 6 + gapSize * 2
+        diceYCenter = gameWindowHeight / 2 + (gameWindowHeight / 13 + gapSize) * (
+            diceNumber - 7
+        )
 
         colonizer.canvas.create_polygon(
             [
-                diceXCenter - radius + gapSize*3,
-                diceYCenter + radius/2,
-                diceXCenter + radius - gapSize*3,
-                diceYCenter + radius/2,
-                diceXCenter + radius - gapSize*3,
-                diceYCenter - radius/2,
-                diceXCenter - radius + gapSize*3,
-                diceYCenter - radius/2,
+                diceXCenter - radius + gapSize * 3,
+                diceYCenter + radius / 2,
+                diceXCenter + radius - gapSize * 3,
+                diceYCenter + radius / 2,
+                diceXCenter + radius - gapSize * 3,
+                diceYCenter - radius / 2,
+                diceXCenter - radius + gapSize * 3,
+                diceYCenter - radius / 2,
             ],
             outline="#000000",
             fill="#FFFFFF",
             width=2,
-            tags="diceRoll" + str(diceNumber)
+            tags="diceRoll" + str(diceNumber),
         )
         colonizer.canvas.create_text(
             diceXCenter,
@@ -965,26 +979,27 @@ def SetupBoard():
         )
         diceRoll.loc[diceNumber, "rollStats1TextObj"] = colonizer.canvas.create_text(
             diceXCenter,
-            diceYCenter + gapSize*1.5,
-            text="(0 - " + "{0:0.1f}".format(diceRoll.loc[diceNumber, "prob"]*100) + "%)",
+            diceYCenter + gapSize * 1.5,
+            text="(0 - "
+            + "{0:0.1f}".format(diceRoll.loc[diceNumber, "prob"] * 100)
+            + "%)",
             font=("Helvetica", 8),
             tags="diceRoll" + str(diceNumber),
-            anchor='c'
+            anchor="c",
         )
         diceRoll.loc[diceNumber, "rollStats2TextObj"] = colonizer.canvas.create_text(
             diceXCenter,
-            diceYCenter + gapSize*3,
+            diceYCenter + gapSize * 3,
             text="0 - 0.0%",
             font=("Helvetica", 10),
             tags="diceRoll" + str(diceNumber),
-            anchor='c'
+            anchor="c",
         )
         colonizer.canvas.tag_bind(
             "diceRoll" + str(diceNumber),
             "<Button-1>",
             lambda event: DiceRolled(diceNumber),
         )
-
 
     # Setting up dice rolls
     hexTiles["hexShapeObj"] = hexTiles["hexShapeObj"].astype(int)
@@ -995,13 +1010,12 @@ def SetupBoard():
 
     global rollNumberObj
     rollNumberObj = colonizer.canvas.create_text(
-        xBoardCenter + (radius + gapSize) * 6 + gapSize*2,
-        gameWindowHeight/2 - (gameWindowHeight/13 + gapSize) * (5.7),
+        xBoardCenter + (radius + gapSize) * 6 + gapSize * 2,
+        gameWindowHeight / 2 - (gameWindowHeight / 13 + gapSize) * (5.7),
         text="Roll: -",
         font=("Helvetica", 20),
-        anchor='c'
+        anchor="c",
     )
-
 
     # Setting up buildings
     def SetupBuilding(buildingNumber, x, y, r, printText, color):
@@ -1063,6 +1077,7 @@ def SetupBoard():
                 ],
             )
 
+        # update economic power
         playerTotalProd = 0
         econTotalProd = 0
 
