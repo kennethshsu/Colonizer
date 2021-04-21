@@ -904,8 +904,8 @@ def SetupBoard():
             row["portType"], row["xHexOffset"], row["yHexOffset"], row["portDirection"],
         )
 
-    def DiceRolled(diceNumber):
 
+    def DiceRolled(diceNumber):
         # resolve robber
         if diceNumber == 7:
             global resolveRobberPending
@@ -1158,14 +1158,16 @@ def HexValue(X_coor, Y_coor):
     hexResource = hexTiles.loc[
         (hexTiles["xHexOffset"] == X_coor) & (hexTiles["yHexOffset"] == Y_coor)
     ]["hexResource"].any()
-    diceNumber = hexTiles.loc[
-        (hexTiles["xHexOffset"] == X_coor) & (hexTiles["yHexOffset"] == Y_coor)
-    ]["diceNumber"].item()
 
-    if (not hexResource) | (hexResource == "desert"):
-        return ["No Resource", diceRoll.loc[diceNumber, "prob"]]
-
-    return [hexResource, diceRoll.loc[diceNumber, "prob"]]
+    if not hexResource:
+        return ["No Resource", 0]
+    elif hexResource == "desert":
+        return ["No Resource", diceRoll.loc[7, "prob"]]
+    else:
+        diceNumber = hexTiles.loc[
+            (hexTiles["xHexOffset"] == X_coor) & (hexTiles["yHexOffset"] == Y_coor)
+        ]["diceNumber"].item()
+        return [hexResource, diceRoll.loc[diceNumber, "prob"]]
 
 
 # To increment and decrement resources
