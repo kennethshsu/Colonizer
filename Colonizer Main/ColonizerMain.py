@@ -1,3 +1,5 @@
+# %%
+# load the required packages
 import numpy as np
 import pandas as pd
 import tkinter as tk
@@ -6,8 +8,9 @@ import tkinter as tk
 gameBoards = pd.read_excel("./GameBoards.xlsx")
 
 # Select which game board to load, gameID is selected above
-gameID = len(gameBoards)
+gameID = len(gameBoards) # picks the latest game
 selectedGameBoard = gameBoards[gameBoards["Game"] == gameID]
+
 # We can add code here to make sure that the board is a valid board (e.g. 4 lumbers,
 # 3 bricks, ..., 1 lumber port, 1 brick port, etc)
 
@@ -42,7 +45,6 @@ pd.set_option("display.max_rows", None, "display.max_columns", None)
 
 debugMode = False
 debugMsg = ["Enable Debug Mode", "Disable Debug Mode"]
-
 
 def ToggleDebugMode():
     global debugMode
@@ -443,6 +445,7 @@ diceSetupOrder = [5, 2, 6, 3, 8, 10, 9, 12, 11, 4, 8, 10, 9, 4, 5, 6, 3, 11]
 diceCounter = 0
 
 for index, row in diceAssignmentOrder.iterrows():
+    # non-desert tiles
     if (
         hexTiles.loc[
             (hexTiles["xHexOffset"] == row["xHexOffset"])
@@ -677,14 +680,10 @@ for index, row in buildingLocation.iterrows():
                 round(row["RingBuildingNum"] / 5 * 3 - 1) % 18
             ]["yHexOffset"]
 
-    buildingLocation.at[index, "OccupiedPlayer"] = 0
-    buildingLocation.at[index, "isCity"] = False
-    buildingLocation.at[index, "buildingShapeObj"] = 0
-    buildingLocation.at[index, "buildingTextObj"] = 0
-
-buildingLocation["OccupiedPlayer"] = buildingLocation["OccupiedPlayer"].astype(int)
-buildingLocation["buildingShapeObj"] = buildingLocation["buildingShapeObj"].astype(int)
-buildingLocation["buildingTextObj"] = buildingLocation["buildingTextObj"].astype(int)
+buildingLocation["OccupiedPlayer"] = int(0)
+buildingLocation["isCity"] = False
+buildingLocation["buildingShapeObj"] = int(0)
+buildingLocation["buildingTextObj"] = int(0)
 
 # Calculate the value of each building location
 resourceEconValue = {"lumber": 0, "brick": 0, "sheep": 0, "wheat": 0, "rock": 0}
@@ -720,7 +719,7 @@ for index, row in buildingLocation.iterrows():
 
 
 # %%
-# Setting up the Board
+# Setting up the board
 # Setting up buildings
 def SetupBoard():
     def HexClicked(hexIndex):
@@ -934,6 +933,14 @@ def SetupBoard():
             expectedRolls = diceRoll.loc[number, "prob"] * totalRollsThisGame
             expectedRollsPct = diceRoll.loc[number, "prob"] * 100
 
+
+            if actualRollsPct > expectedRollsPct:
+                color = "#A52A2A" # red
+            elif actualRollsPct < expectedRollsPct:
+                color = "#008000" # green
+            else:
+                color = "#000000" # black
+
             colonizer.canvas.itemconfig(
                 diceRoll.loc[number, "rollStats1TextObj"],
                 text="("
@@ -941,10 +948,12 @@ def SetupBoard():
                 + " - "
                 + "{0:0.1f}".format(expectedRollsPct)
                 + "%)",
+                # fill = color,
             )
             colonizer.canvas.itemconfig(
                 diceRoll.loc[number, "rollStats2TextObj"],
                 text=str(actualRolls) + " - " "{0:0.1f}".format(actualRollsPct) + "%",
+                fill = color,
             )
 
     def SetupDiceRoll(diceNumber):
@@ -1019,16 +1028,19 @@ def SetupBoard():
 
     # Setting up buildings
     def SetupBuilding(buildingNumber, x, y, r, printText, color):
-        x0 = x - r
-        y0 = y - r
-        x1 = x + r
-        y1 = y + r
-
+        # setup settlement circle
+        x0 = x - r * 2.5
+        y0 = y - r * 2.5
+        x1 = x + r * 2.5
+        y1 = y + r * 2.5
         buildingLocation.at[
             buildingNumber - 1, "buildingShapeObj"
         ] = colonizer.canvas.create_oval(
-            x0, y0, x1, y1, fill=color, tags="Building" + str(buildingNumber)
+            x0, y0, x1, y1, fill=color, tags="Building" + str(buildingNumber),
+            width=1
         )
+
+        # setup texts
         buildingLocation.at[
             buildingNumber - 1, "buildingTextObj"
         ] = colonizer.canvas.create_text(
@@ -1050,11 +1062,12 @@ def SetupBoard():
         yOffset = (row["Hex1_Y"] + row["Hex2_Y"] + row["Hex3_Y"]) / 3
         xCenter = xBoardCenter + np.sqrt(3) / 2 * radius * xOffset + gapSize * xOffset
         yCenter = yBoardCenter + 3 / 4 * radius * yOffset + gapSize * yOffset
+
         SetupBuilding(
             row["BuildingNum"],
             xCenter,
             yCenter,
-            gapSize * 2.5,
+            gapSize,
             "{0:0.2f}".format(buildingLocation.at[index, "LocValue"] * 10),
             "#FFFFFF",
         )
@@ -1062,11 +1075,15 @@ def SetupBoard():
     def BuildingClicked(buildingNumber):
         global currentActivePlayer, currentAction
 
-        if currentAction == "Settlement":
-            # color the building location
+        if currentAction == "Road":
+            print(currentActivePlayer, "wants to build a road")
+
+        elif currentAction == "Settlement":
+            # mark the player
             buildingLocation.at[
                 buildingNumber - 1, "OccupiedPlayer"
             ] = currentActivePlayer
+            # color the building location
             colonizer.canvas.itemconfig(
                 buildingLocation.at[buildingNumber - 1, "buildingShapeObj"],
                 fill=playerColor[
@@ -1077,6 +1094,38 @@ def SetupBoard():
                 ],
             )
 
+            UpdateEconProdValue()
+
+        elif currentAction == "City":
+            # mark the player
+            buildingLocation.at[
+                buildingNumber - 1, "OccupiedPlayer"
+            ] = currentActivePlayer
+            buildingLocation.at[
+                buildingNumber - 1, "isCity"
+            ] = True
+            # color the building location and change the thickness
+            colonizer.canvas.itemconfig(
+                buildingLocation.at[buildingNumber - 1, "buildingShapeObj"],
+                fill=playerColor[
+                    playerStats.loc[
+                        buildingLocation.loc[buildingNumber - 1, "OccupiedPlayer"],
+                        "color",
+                    ]
+                ],
+                width = 5,
+            )
+
+            UpdateEconProdValue()
+
+        elif currentAction == "Dev_Card":
+            print(currentActivePlayer, "wants to buy a dev card")
+
+        # unmark the player
+        currentAction = None
+        currentActivePlayer = None
+
+    def UpdateEconProdValue():
         # update economic power
         playerTotalProd = 0
         econTotalProd = 0
@@ -1087,32 +1136,33 @@ def SetupBoard():
             econResourceProd = 0
 
             for index, row in buildingLocation.iterrows():
-                currentHexPlayer = row["OccupiedPlayer"]
+                currentLocPlayer = row["OccupiedPlayer"]
+                # print(row)
 
-                if currentHexPlayer != 0:
+                if currentLocPlayer != 0:
 
-                    currentHexValue = HexValue(row["Hex1_X"], row["Hex1_Y"])
+                    currentHexValue = HexValueInfo(row["Hex1_X"], row["Hex1_Y"])
                     if currentHexValue[0] == resourceType:
                         currentHexResourceValue = currentHexValue[1]
                         econResourceProd += currentHexResourceValue
 
-                        if currentHexPlayer == currentActivePlayer:
+                        if currentLocPlayer == currentActivePlayer:
                             playerResourceProd += currentHexResourceValue
 
-                    currentHexValue = HexValue(row["Hex2_X"], row["Hex2_Y"])
+                    currentHexValue = HexValueInfo(row["Hex2_X"], row["Hex2_Y"])
                     if currentHexValue[0] == resourceType:
                         currentHexResourceValue = currentHexValue[1]
                         econResourceProd += currentHexResourceValue
 
-                        if currentHexPlayer == currentActivePlayer:
+                        if currentLocPlayer == currentActivePlayer:
                             playerResourceProd += currentHexResourceValue
 
-                    currentHexValue = HexValue(row["Hex3_X"], row["Hex3_Y"])
+                    currentHexValue = HexValueInfo(row["Hex3_X"], row["Hex3_Y"])
                     if currentHexValue[0] == resourceType:
                         currentHexResourceValue = currentHexValue[1]
                         econResourceProd += currentHexResourceValue
 
-                        if currentHexPlayer == currentActivePlayer:
+                        if currentLocPlayer == currentActivePlayer:
                             playerResourceProd += currentHexResourceValue
 
             playerTotalProd += playerResourceProd
@@ -1148,13 +1198,87 @@ def SetupBoard():
             text="+" + "{0:0.3f}".format(econTotalProd),
         )
 
-        currentAction = None
-        currentActivePlayer = None
+    def UpdateEconProdValue2():
+
+        for index, row in buildingLocation.iterrows():
+
+            return
+        # # update economic power
+        # playerTotalProd = 0
+        # econTotalProd = 0
+
+        # # can further improve to not loop 5 times
+        # for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
+        #     playerResourceProd = 0
+        #     econResourceProd = 0
+
+        #     for index, row in buildingLocation.iterrows():
+        #         currentLocPlayer = row["OccupiedPlayer"]
+        #         # print(row)
+
+        #         if currentLocPlayer != 0:
+
+        #             currentHexValue = HexValueInfo(row["Hex1_X"], row["Hex1_Y"])
+        #             if currentHexValue[0] == resourceType:
+        #                 currentHexResourceValue = currentHexValue[1]
+        #                 econResourceProd += currentHexResourceValue
+
+        #                 if currentLocPlayer == currentActivePlayer:
+        #                     playerResourceProd += currentHexResourceValue
+
+        #             currentHexValue = HexValueInfo(row["Hex2_X"], row["Hex2_Y"])
+        #             if currentHexValue[0] == resourceType:
+        #                 currentHexResourceValue = currentHexValue[1]
+        #                 econResourceProd += currentHexResourceValue
+
+        #                 if currentLocPlayer == currentActivePlayer:
+        #                     playerResourceProd += currentHexResourceValue
+
+        #             currentHexValue = HexValueInfo(row["Hex3_X"], row["Hex3_Y"])
+        #             if currentHexValue[0] == resourceType:
+        #                 currentHexResourceValue = currentHexValue[1]
+        #                 econResourceProd += currentHexResourceValue
+
+        #                 if currentLocPlayer == currentActivePlayer:
+        #                     playerResourceProd += currentHexResourceValue
+
+        #     playerTotalProd += playerResourceProd
+        #     econTotalProd += econResourceProd
+
+            # update the specific resource production for the player
+        #     playerStats.loc[
+        #         currentActivePlayer, resourceType + "Prod"
+        #     ] = playerResourceProd
+        #     colonizer.canvas.itemconfig(
+        #         playerStats.loc[currentActivePlayer, resourceType + "ProdObj"],
+        #         text="+" + "{0:0.3f}".format(playerResourceProd),
+        #     )
+
+        #     # update all resources production for all players combined
+        #     playerStats.loc[0, resourceType + "Prod"] = econResourceProd
+        #     colonizer.canvas.itemconfig(
+        #         playerStats.loc[0, resourceType + "ProdObj"],
+        #         text="+" + "{0:0.3f}".format(econResourceProd),
+        #     )
+
+        # # update the total resource production for the player
+        # playerStats.loc[currentActivePlayer, "totalProd"] = playerTotalProd
+        # colonizer.canvas.itemconfig(
+        #     playerStats.loc[currentActivePlayer, "resourceTotalProdObj"],
+        #     text="+" + "{0:0.3f}".format(playerTotalProd),
+        # )
+
+        # # update all resources production for all players combined
+        # playerStats.loc[0, "totalProd"] = econTotalProd
+        # colonizer.canvas.itemconfig(
+        #     playerStats.loc[0, "resourceTotalProdObj"],
+        #     text="+" + "{0:0.3f}".format(econTotalProd),
+        # )
 
 
 # %%
 # update resource production value, returns an array [resource, probability], of the hex
-def HexValue(X_coor, Y_coor):
+def HexValueInfo(X_coor, Y_coor):
     hexResource = hexTiles.loc[
         (hexTiles["xHexOffset"] == X_coor) & (hexTiles["yHexOffset"] == Y_coor)
     ]["hexResource"].any()
