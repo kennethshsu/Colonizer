@@ -915,8 +915,28 @@ def SetupBoard():
             indexForRoll = hexTiles["diceNumber"] == diceNumber
             indexForNonRobber = hexTiles["robberOccupied"] == False
             resourcesRolledDF = hexTiles[indexForRoll & indexForNonRobber]
-            print(resourcesRolledDF)
 
+            for index, row in resourcesRolledDF.iterrows():
+                print("======")
+                currentHexResource = row["hexResource"]
+                # print("working on", diceNumber, currentHexResource)
+                for hexes in [1, 2, 3]:
+                    print("-----", hexes)
+                    nearbyBuildings = buildingLocation[(buildingLocation["Hex"+str(hexes)+"_X"] == row["xHexOffset"]) & (buildingLocation["Hex"+str(hexes)+"_Y"] == row["yHexOffset"])]
+
+                    print(nearbyBuildings["BuildingNum"])
+                    eligiblePlayers = nearbyBuildings[nearbyBuildings["OccupiedPlayer"] != 0]
+
+                    if not eligiblePlayers.empty:
+
+                    # if not eligiblePlayers.empty:
+                        for index, row in eligiblePlayers.iterrows():
+                            if row["OccupiedPlayer"] != 0:
+                                print("==== player", row["OccupiedPlayer"], "gets", currentHexResource)
+                    # print(nearbyBuildings[nearbyBuildings["OccupiedPlayer"] != 0], row["hexResource"])
+
+
+        # update dice tracker
         diceRoll.loc[diceNumber, "rolledThisGame"] += 1
         totalRollsThisGame = diceRoll["rolledThisGame"].sum()
         # update total roll number
@@ -1125,155 +1145,46 @@ def SetupBoard():
         currentAction = None
         currentActivePlayer = None
 
+
     def UpdateEconProdValue():
-        # update economic power
-        playerTotalProd = 0
-        econTotalProd = 0
-
-        # can further improve to not loop 5 times
+        # reset all production stats
         for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
-            playerResourceProd = 0
-            econResourceProd = 0
+            playerStats[resourceType + "Prod"] = 0
 
-            for index, row in buildingLocation.iterrows():
-                currentLocPlayer = row["OccupiedPlayer"]
-                # print(row)
+        # loop through all buildingLocation to calculate only players' economic power
+        for index, row in buildingLocation.iterrows():
+            if row["OccupiedPlayer"] != 0:
+                for nearbyHexNum in ["1", "2", "3"]:
+                    currentHexValue = HexValueInfo(
+                        row["Hex"+nearbyHexNum+"_X"], row["Hex"+nearbyHexNum+"_Y"]
+                    )
 
-                if currentLocPlayer != 0:
+                    valueOfHex = currentHexValue[1] * (2 if row["isCity"] else 1)
 
-                    currentHexValue = HexValueInfo(row["Hex1_X"], row["Hex1_Y"])
-                    if currentHexValue[0] == resourceType:
-                        currentHexResourceValue = currentHexValue[1]
-                        econResourceProd += currentHexResourceValue
+                    playerStats.loc[
+                        row["OccupiedPlayer"], currentHexValue[0]+"Prod"
+                    ] += valueOfHex
 
-                        if currentLocPlayer == currentActivePlayer:
-                            playerResourceProd += currentHexResourceValue
-
-                    currentHexValue = HexValueInfo(row["Hex2_X"], row["Hex2_Y"])
-                    if currentHexValue[0] == resourceType:
-                        currentHexResourceValue = currentHexValue[1]
-                        econResourceProd += currentHexResourceValue
-
-                        if currentLocPlayer == currentActivePlayer:
-                            playerResourceProd += currentHexResourceValue
-
-                    currentHexValue = HexValueInfo(row["Hex3_X"], row["Hex3_Y"])
-                    if currentHexValue[0] == resourceType:
-                        currentHexResourceValue = currentHexValue[1]
-                        econResourceProd += currentHexResourceValue
-
-                        if currentLocPlayer == currentActivePlayer:
-                            playerResourceProd += currentHexResourceValue
-
-            playerTotalProd += playerResourceProd
-            econTotalProd += econResourceProd
-
-            # update the specific resource production for the player
-            playerStats.loc[
-                currentActivePlayer, resourceType + "Prod"
-            ] = playerResourceProd
-            colonizer.canvas.itemconfig(
-                playerStats.loc[currentActivePlayer, resourceType + "ProdObj"],
-                text="+" + "{0:0.3f}".format(playerResourceProd),
+        # add up the total economic power by summing over players
+        for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
+            playerStats.loc[0, resourceType + "Prod"] = sum(
+                playerStats.loc[1:4, resourceType + "Prod"]
             )
 
-            # update all resources production for all players combined
-            playerStats.loc[0, resourceType + "Prod"] = econResourceProd
+        # print to the screen
+        for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
             colonizer.canvas.itemconfig(
                 playerStats.loc[0, resourceType + "ProdObj"],
-                text="+" + "{0:0.3f}".format(econResourceProd),
+                text="+" + "{0:0.3f}".format(playerStats.loc[0, resourceType + "Prod"])
             )
 
-        # update the total resource production for the player
-        playerStats.loc[currentActivePlayer, "totalProd"] = playerTotalProd
-        colonizer.canvas.itemconfig(
-            playerStats.loc[currentActivePlayer, "resourceTotalProdObj"],
-            text="+" + "{0:0.3f}".format(playerTotalProd),
-        )
-
-        # update all resources production for all players combined
-        playerStats.loc[0, "totalProd"] = econTotalProd
-        colonizer.canvas.itemconfig(
-            playerStats.loc[0, "resourceTotalProdObj"],
-            text="+" + "{0:0.3f}".format(econTotalProd),
-        )
-
-    def UpdateEconProdValue2():
-
-        for index, row in buildingLocation.iterrows():
-
-            return
-        # # update economic power
-        # playerTotalProd = 0
-        # econTotalProd = 0
-
-        # # can further improve to not loop 5 times
-        # for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
-        #     playerResourceProd = 0
-        #     econResourceProd = 0
-
-        #     for index, row in buildingLocation.iterrows():
-        #         currentLocPlayer = row["OccupiedPlayer"]
-        #         # print(row)
-
-        #         if currentLocPlayer != 0:
-
-        #             currentHexValue = HexValueInfo(row["Hex1_X"], row["Hex1_Y"])
-        #             if currentHexValue[0] == resourceType:
-        #                 currentHexResourceValue = currentHexValue[1]
-        #                 econResourceProd += currentHexResourceValue
-
-        #                 if currentLocPlayer == currentActivePlayer:
-        #                     playerResourceProd += currentHexResourceValue
-
-        #             currentHexValue = HexValueInfo(row["Hex2_X"], row["Hex2_Y"])
-        #             if currentHexValue[0] == resourceType:
-        #                 currentHexResourceValue = currentHexValue[1]
-        #                 econResourceProd += currentHexResourceValue
-
-        #                 if currentLocPlayer == currentActivePlayer:
-        #                     playerResourceProd += currentHexResourceValue
-
-        #             currentHexValue = HexValueInfo(row["Hex3_X"], row["Hex3_Y"])
-        #             if currentHexValue[0] == resourceType:
-        #                 currentHexResourceValue = currentHexValue[1]
-        #                 econResourceProd += currentHexResourceValue
-
-        #                 if currentLocPlayer == currentActivePlayer:
-        #                     playerResourceProd += currentHexResourceValue
-
-        #     playerTotalProd += playerResourceProd
-        #     econTotalProd += econResourceProd
-
-            # update the specific resource production for the player
-        #     playerStats.loc[
-        #         currentActivePlayer, resourceType + "Prod"
-        #     ] = playerResourceProd
-        #     colonizer.canvas.itemconfig(
-        #         playerStats.loc[currentActivePlayer, resourceType + "ProdObj"],
-        #         text="+" + "{0:0.3f}".format(playerResourceProd),
-        #     )
-
-        #     # update all resources production for all players combined
-        #     playerStats.loc[0, resourceType + "Prod"] = econResourceProd
-        #     colonizer.canvas.itemconfig(
-        #         playerStats.loc[0, resourceType + "ProdObj"],
-        #         text="+" + "{0:0.3f}".format(econResourceProd),
-        #     )
-
-        # # update the total resource production for the player
-        # playerStats.loc[currentActivePlayer, "totalProd"] = playerTotalProd
-        # colonizer.canvas.itemconfig(
-        #     playerStats.loc[currentActivePlayer, "resourceTotalProdObj"],
-        #     text="+" + "{0:0.3f}".format(playerTotalProd),
-        # )
-
-        # # update all resources production for all players combined
-        # playerStats.loc[0, "totalProd"] = econTotalProd
-        # colonizer.canvas.itemconfig(
-        #     playerStats.loc[0, "resourceTotalProdObj"],
-        #     text="+" + "{0:0.3f}".format(econTotalProd),
-        # )
+        for playerID in [1, 2, 3, 4]:
+            for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
+                if playerStats.loc[playerID, "inPlay"]:
+                    colonizer.canvas.itemconfig(
+                        playerStats.loc[playerID, resourceType + "ProdObj"],
+                        text="+" + "{0:0.3f}".format(playerStats.loc[playerID, resourceType + "Prod"])
+                    )
 
 
 # %%
