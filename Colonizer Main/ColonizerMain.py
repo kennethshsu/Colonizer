@@ -549,6 +549,15 @@ buildingLocation = pd.DataFrame(
     buildingLocationArray, columns=["BuildingNum", "Ring", "RingBuildingNum"]
 )
 
+buildingLocation["OccupiedPlayer"] = int(0)
+buildingLocation["isCity"] = False
+buildingLocation["buildingShapeObj"] = int(0)
+buildingLocation["buildingTextObj"] = int(0)
+buildingLocation["neighbor1"] = int(0)
+buildingLocation["neighbor2"] = int(0)
+buildingLocation["neighbor3"] = int(0)
+
+
 for index, row in buildingLocation.iterrows():
 
     if row["Ring"] == 1:
@@ -567,7 +576,14 @@ for index, row in buildingLocation.iterrows():
             (row["RingBuildingNum"]) % 6 - 1
         ]["yHexOffset"]
 
+        buildingLocation.at[index, "neighbor1"] = (index + 1)%6 + 1
+        buildingLocation.at[index, "neighbor2"] = (index + 5)%6 + 1
+        buildingLocation.at[index, "neighbor3"] = (index + 1)*3 + 4
+
     elif row["Ring"] == 2:
+        buildingLocation.at[index, "neighbor1"] = index + 2 if index != 23 else 7
+        buildingLocation.at[index, "neighbor2"] = index if index != 6 else 24
+
         # These buildings are adjacent to two hexes on ring 2
         if row["RingBuildingNum"] % 3 == 1:
             buildingLocation.at[index, "Hex1_X"] = HexOrder[HexOrder["Ring"] == 2].iloc[
@@ -588,6 +604,8 @@ for index, row in buildingLocation.iterrows():
             buildingLocation.at[index, "Hex3_Y"] = HexOrder[HexOrder["Ring"] == 3].iloc[
                 (round(row["RingBuildingNum"] / 3)) * 2
             ]["yHexOffset"]
+
+            buildingLocation.at[index, "neighbor3"] = (index - 3) / 3
 
         # These buildings are adjacent to two hexes on ring 3
         else:
@@ -610,7 +628,15 @@ for index, row in buildingLocation.iterrows():
                 (round((row["RingBuildingNum"] + 1) / 3 * 2) - 1) % 12
             ]["yHexOffset"]
 
+            if row["RingBuildingNum"] % 3 == 2:
+                buildingLocation.at[index, "neighbor3"] = (row["BuildingNum"] - 2 )/3*5 + 16
+            else:
+                buildingLocation.at[index, "neighbor3"] = (row["BuildingNum"] - 3 )/3*5 + 19
+
     elif row["Ring"] == 3:
+        buildingLocation.at[index, "neighbor1"] = index + 2 if index != 53 else 25
+        buildingLocation.at[index, "neighbor2"] = index if index != 24 else 54
+
         # These buildings are adjacent to one hex on ring 3 (i.e. outer coast)
         if row["RingBuildingNum"] % 5 != 2 & row["RingBuildingNum"] % 5 != 5:
             buildingLocation.at[index, "Hex1_X"] = HexOrder[HexOrder["Ring"] == 3].iloc[
@@ -656,6 +682,9 @@ for index, row in buildingLocation.iterrows():
             buildingLocation.at[index, "Hex3_Y"] = HexOrder[HexOrder["Ring"] == 4].iloc[
                 round((row["RingBuildingNum"] - 2) / 5 * 3) % 18
             ]["yHexOffset"]
+
+            buildingLocation.at[index, "neighbor3"] = (row["BuildingNum"]-1)/5*3-7
+
         elif row["RingBuildingNum"] % 5 == 0:
             buildingLocation.at[index, "Hex1_X"] = HexOrder[HexOrder["Ring"] == 3].iloc[
                 round((row["RingBuildingNum"] - row["RingBuildingNum"] % 5) / 5 * 2 - 1)
@@ -680,10 +709,9 @@ for index, row in buildingLocation.iterrows():
                 round(row["RingBuildingNum"] / 5 * 3 - 1) % 18
             ]["yHexOffset"]
 
-buildingLocation["OccupiedPlayer"] = int(0)
-buildingLocation["isCity"] = False
-buildingLocation["buildingShapeObj"] = int(0)
-buildingLocation["buildingTextObj"] = int(0)
+            buildingLocation.at[index, "neighbor3"] = (row["BuildingNum"]-4)/5*3-6
+
+print(buildingLocation[["Ring", "BuildingNum", "neighbor1", "neighbor2", "neighbor3"]])
 
 # Calculate the value of each building location
 resourceEconValue = {"lumber": 0, "brick": 0, "sheep": 0, "wheat": 0, "rock": 0}
@@ -917,24 +945,21 @@ def SetupBoard():
             resourcesRolledDF = hexTiles[indexForRoll & indexForNonRobber]
 
             for index, row in resourcesRolledDF.iterrows():
-                print("======")
+                xHexOffsetTarget = row["xHexOffset"]
+                yHexOffsetTarget = row["yHexOffset"]
                 currentHexResource = row["hexResource"]
-                # print("working on", diceNumber, currentHexResource)
+
                 for hexes in [1, 2, 3]:
-                    print("-----", hexes)
-                    nearbyBuildings = buildingLocation[(buildingLocation["Hex"+str(hexes)+"_X"] == row["xHexOffset"]) & (buildingLocation["Hex"+str(hexes)+"_Y"] == row["yHexOffset"])]
+                    nearbyBuildings = buildingLocation[
+                        (buildingLocation["Hex"+str(hexes)+"_X"] == xHexOffsetTarget)
+                        & (buildingLocation["Hex"+str(hexes)+"_Y"] == yHexOffsetTarget)
+                    ]
+                    nearbyPlayers = nearbyBuildings[nearbyBuildings["OccupiedPlayer"] != 0]
 
-                    print(nearbyBuildings["BuildingNum"])
-                    eligiblePlayers = nearbyBuildings[nearbyBuildings["OccupiedPlayer"] != 0]
-
-                    if not eligiblePlayers.empty:
-
-                    # if not eligiblePlayers.empty:
-                        for index, row in eligiblePlayers.iterrows():
-                            if row["OccupiedPlayer"] != 0:
-                                print("==== player", row["OccupiedPlayer"], "gets", currentHexResource)
-                    # print(nearbyBuildings[nearbyBuildings["OccupiedPlayer"] != 0], row["hexResource"])
-
+                    for index, row in nearbyPlayers.iterrows():
+                        ResourceIncrement(row["OccupiedPlayer"], currentHexResource)
+                        if row["isCity"]:
+                            ResourceIncrement(row["OccupiedPlayer"], currentHexResource)
 
         # update dice tracker
         diceRoll.loc[diceNumber, "rolledThisGame"] += 1
@@ -1159,11 +1184,11 @@ def SetupBoard():
                         row["Hex"+nearbyHexNum+"_X"], row["Hex"+nearbyHexNum+"_Y"]
                     )
 
-                    valueOfHex = currentHexValue[1] * (2 if row["isCity"] else 1)
-
-                    playerStats.loc[
-                        row["OccupiedPlayer"], currentHexValue[0]+"Prod"
-                    ] += valueOfHex
+                    if currentHexValue[0] != "No Resource":
+                        valueOfHex = currentHexValue[1] * (2 if row["isCity"] else 1)
+                        playerStats.loc[
+                            row["OccupiedPlayer"], currentHexValue[0]+"Prod"
+                        ] += valueOfHex
 
         # add up the total economic power by summing over players
         for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
