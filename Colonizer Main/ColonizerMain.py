@@ -8,7 +8,7 @@ import tkinter as tk
 gameBoards = pd.read_excel("./GameBoards.xlsx")
 
 # Select which game board to load, gameID is selected above
-gameID = len(gameBoards) # picks the latest game
+gameID = 22 #len(gameBoards) # picks the latest game
 selectedGameBoard = gameBoards[gameBoards["Game"] == gameID]
 
 # We can add code here to make sure that the board is a valid board (e.g. 4 lumbers,
@@ -711,8 +711,6 @@ for index, row in buildingLocation.iterrows():
 
             buildingLocation.at[index, "neighbor3"] = (row["BuildingNum"]-4)/5*3-6
 
-print(buildingLocation[["Ring", "BuildingNum", "neighbor1", "neighbor2", "neighbor3"]])
-
 # Calculate the value of each building location
 resourceEconValue = {"lumber": 0, "brick": 0, "sheep": 0, "wheat": 0, "rock": 0}
 
@@ -744,6 +742,43 @@ for index, row in buildingLocation.iterrows():
             )
 
     buildingLocation.at[index, "LocValue"] = buildingLocValue
+
+# prepare unique roads
+uniqueRoads = pd.DataFrame(
+    columns = ["from", "to"]
+)
+uniqueRoads = uniqueRoads.append(
+    buildingLocation[["BuildingNum","neighbor1"]].rename(
+        columns={"BuildingNum":"from", "neighbor1":"to"}
+    )
+)
+uniqueRoads = uniqueRoads.append(
+    buildingLocation[["BuildingNum","neighbor2"]].rename(
+        columns={"BuildingNum":"from", "neighbor2":"to"}
+    )
+)
+uniqueRoads = uniqueRoads.append(
+    buildingLocation[["BuildingNum","neighbor3"]].rename(
+        columns={"BuildingNum":"from", "neighbor3":"to"}
+    )
+)
+# drop rows with only 2 neighbors
+uniqueRoads = uniqueRoads[uniqueRoads["to"] != 0]
+uniqueRoads.reset_index(drop = True, inplace = True)
+
+# re-arrange the order of road direction:
+# always go from smaller location ID to larger location ID
+for index, row in uniqueRoads.iterrows():
+    if row["from"] > row["to"]:
+        holdingValue = row["from"]
+        uniqueRoads.at[index, "from"] = row["to"]
+        uniqueRoads.at[index, "to"] = holdingValue
+# drops the same roads
+uniqueRoads = uniqueRoads.drop_duplicates(subset = ["from", "to"])
+uniqueRoads.reset_index(drop = True, inplace = True)
+uniqueRoads["roadNum"] = uniqueRoads.index+1
+roadConnections = uniqueRoads[["roadNum", "from", "to"]]
+print(roadConnections)
 
 
 # %%
@@ -1101,21 +1136,6 @@ def SetupBoard():
             lambda event: BuildingClicked(buildingNumber),
         )
 
-    for index, row in buildingLocation.iterrows():
-        # Calculate the center of each hex tile
-        xOffset = (row["Hex1_X"] + row["Hex2_X"] + row["Hex3_X"]) / 3
-        yOffset = (row["Hex1_Y"] + row["Hex2_Y"] + row["Hex3_Y"]) / 3
-        xCenter = xBoardCenter + np.sqrt(3) / 2 * radius * xOffset + gapSize * xOffset
-        yCenter = yBoardCenter + 3 / 4 * radius * yOffset + gapSize * yOffset
-
-        SetupBuilding(
-            row["BuildingNum"],
-            xCenter,
-            yCenter,
-            gapSize,
-            "{0:0.2f}".format(buildingLocation.at[index, "LocValue"] * 10),
-            "#FFFFFF",
-        )
 
     def BuildingClicked(buildingNumber):
         global currentActivePlayer, currentAction
@@ -1169,6 +1189,32 @@ def SetupBoard():
         # unmark the player
         currentAction = None
         currentActivePlayer = None
+
+    for index, row in buildingLocation.iterrows():
+        # Calculate the center of each hex tile
+        xOffset = (row["Hex1_X"] + row["Hex2_X"] + row["Hex3_X"]) / 3
+        yOffset = (row["Hex1_Y"] + row["Hex2_Y"] + row["Hex3_Y"]) / 3
+        xCenter = xBoardCenter + np.sqrt(3) / 2 * radius * xOffset + gapSize * xOffset
+        yCenter = yBoardCenter + 3 / 4 * radius * yOffset + gapSize * yOffset
+
+        SetupBuilding(
+            row["BuildingNum"],
+            xCenter,
+            yCenter,
+            gapSize,
+            "{0:0.2f}".format(buildingLocation.at[index, "LocValue"] * 10),
+            "#FFFFFF",
+        )
+
+
+    def SetupRoad(fromBuildingNum, toBuildingNum):
+        print("setup road from building", str(fromBuildingNum), "to", str(toBuildingNum))
+        # colonizer.create_line()
+
+
+    # for index, row in uniqueRoads.iterrows():
+    #     SetupRoad(row["from"], row["to"])
+    SetupRoad(1, 2)
 
 
     def UpdateEconProdValue():
