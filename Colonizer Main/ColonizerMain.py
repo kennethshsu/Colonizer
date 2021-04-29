@@ -3,17 +3,63 @@
 import numpy as np
 import pandas as pd
 import tkinter as tk
+import sys
 
 # %%
 gameBoards = pd.read_excel("./GameBoards.xlsx")
 
-# Select which game board to load, gameID is selected above
-gameID = 22 #len(gameBoards) # picks the latest game
+# select which game board to load, gameID is selected above
+# picks a custom game here
+gameID = 0
+# if no game is selected, pick the latest game
+gameID = len(gameBoards) if gameID == 0 else gameID
 selectedGameBoard = gameBoards[gameBoards["Game"] == gameID]
 
-# We can add code here to make sure that the board is a valid board (e.g. 4 lumbers,
-# 3 bricks, ..., 1 lumber port, 1 brick port, etc)
+# checking to make sure the board is a valid board
+# (e.g. it has 4 lumbers hexes, 3 bricks, ..., 1 lumber port, 1 brick port, etc)
+validBoard = pd.DataFrame(
+    {
+        "resource": ["lumber", "brick", "sheep", "wheat", "rock", "desert"],
+        "hexCount": [4, 3, 4, 4, 3, 1],
+        "portCount": [1, 1, 1, 1, 1, 4],
+    }
+)
 
+selectedGameHexes = selectedGameBoard.T[gameID - 1].iloc[1:20]
+selectedGamePorts = selectedGameBoard.T[gameID - 1].iloc[20:29]
+gameBoardValid = True
+
+for index, row in validBoard.iterrows():
+    hexCount = sum(1 for x in selectedGameHexes if x == row["resource"])
+    portCount = sum(1 for x in selectedGamePorts if x == row["resource"])
+
+    # checking resource hexes
+    if hexCount != row["hexCount"]:
+        print(
+            "Error: selected game does not have",
+            row["hexCount"],
+            row["resource"],
+            "hexes (got",
+            hexCount,
+            "instead)",
+        )
+        gameBoardValid = False
+
+    # checking resource ports
+    if portCount != row["portCount"]:
+        print(
+            "Error: selected game does not have",
+            row["portCount"],
+            row["resource"],
+            "ports (got",
+            portCount,
+            "instead)",
+        )
+        gameBoardValid = False
+
+if not gameBoardValid:
+    print("Exiting Colonizer...")
+    sys.exit()
 
 # %%
 gameWindowWidth = 1600
@@ -23,14 +69,14 @@ yBoardCenter = 450
 radius = 65
 gapSize = 7
 
-# Declare the the game
+# declare the the game
 colonizer = tk.Tk()
 colonizer.canvas = tk.Canvas(width=gameWindowWidth, height=gameWindowHeight)
 colonizer.title("Colonizer - Game " + str(gameID))
 colonizer.canvas.pack()
 colonizer.focus_force()  # forces the window to be at the top and focused
 
-# Useful global variables
+# useful global variables
 currentRoll = 0
 resolveRobberPending = False
 rollNumberObj = 0
@@ -40,11 +86,12 @@ currentAction = None
 
 
 # %%
-# Debugger
+# debugger
 pd.set_option("display.max_rows", None, "display.max_columns", None)
 
 debugMode = False
 debugMsg = ["Enable Debug Mode", "Disable Debug Mode"]
+
 
 def ToggleDebugMode():
     global debugMode
@@ -60,6 +107,17 @@ def ToggleDebugMode():
                 hexTiles.at[index, "hexCoordTextObj"],
                 text="(" + str(row["xHexOffset"]) + ", " + str(row["yHexOffset"]) + ")",
             )
+
+        # print road number
+        for index, row in roadConnections.iterrows():
+            colonizer.canvas.itemconfig(
+                roadConnections.at[index, "roadTextObj"],
+                text=roadConnections.at[index, "roadNum"],
+            )
+            colonizer.canvas.itemconfig(
+                roadConnections.at[index, "roadShapeObj"], fill="#e2e2e2"
+            )
+
         # print building number
         for index, row in buildingLocation.iterrows():
             colonizer.canvas.itemconfig(
@@ -71,9 +129,26 @@ def ToggleDebugMode():
             )
 
     else:
-        # print hex coordinates
+        # not printing coordinates
         for index, row in hexTiles.iterrows():
             colonizer.canvas.itemconfig(hexTiles.at[index, "hexCoordTextObj"], text="")
+
+        # not printing any road info
+        for index, row in roadConnections.iterrows():
+            colonizer.canvas.itemconfig(
+                roadConnections.at[index, "roadTextObj"], text="",
+            )
+            colonizer.canvas.itemconfig(
+                roadConnections.at[index, "roadShapeObj"],
+                fill="#FFFFFF"
+                if roadConnections.loc[index, "occupiedPlayer"] == 0
+                else playerColor[
+                    playerStats.loc[
+                        roadConnections.loc[index, "occupiedPlayer"], "color"
+                    ]
+                ],
+            )
+
         # print building location value
         for index, row in buildingLocation.iterrows():
             colonizer.canvas.itemconfig(
@@ -97,7 +172,7 @@ DebugToggle.place(x=100, y=20, anchor="c")
 
 
 # %%
-# Algorithms to evaluate starting positions
+# algorithms to evaluate starting positions
 def EvaluatePlayerRank(*args):
     evalMethod = evaluationMethod.get()
     playerRank = pd.DataFrame({"playerID": [0, 1, 2, 3, 4]})
@@ -210,7 +285,7 @@ def EvaluatePlayerRank(*args):
 
     # Print rankings
     playerRank["rank"] = playerRank["score"].rank(ascending=False)
-    print(playerRank)
+    # print(playerRank)
 
     for playerID in [1, 2, 3, 4]:
         if playerStats.loc[playerID, "inPlay"]:
@@ -242,8 +317,8 @@ evaluationMethodDropdown.place(x=400, y=22.5, anchor="c")
 
 
 # %%
-# Some useful dictionaries
-# Resrouce color
+# some useful dictionaries
+# resrouce color
 resourceColor = {
     "lumber": "#11933B",
     "brick": "#DC5539",
@@ -261,7 +336,7 @@ playerColor = {
     "black": "#8A8A8A",
 }
 
-# Dice probability
+# dice probability
 diceRoll = pd.DataFrame(
     {
         "roll": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,],
@@ -285,7 +360,7 @@ diceRoll = pd.DataFrame(
 )
 diceRoll = diceRoll.set_index("roll")
 
-# Keep track of players
+# keep track of players
 playerStats = pd.DataFrame(
     {
         "playerID": [0, 1, 2, 3, 4],
@@ -329,10 +404,10 @@ playerStats = pd.DataFrame(
 
 
 # %%
-# Load the board, hexes will get a default diceNumber of 0,
-# it will be assigned next
+# load the board, hexes will get a default diceNumber of 0,
+# it will be assigned later
 
-# Load the hexes
+# load the hexes
 hexTiles = pd.DataFrame(
     [
         # Row 1
@@ -370,7 +445,7 @@ hexTiles = pd.DataFrame(
     ],
 )
 
-# Load the ports
+# load the ports
 portTiles = pd.DataFrame(
     [
         [selectedGameBoard.iloc[0, 20], -2, -4, "NW"],
@@ -388,11 +463,11 @@ portTiles = pd.DataFrame(
 
 
 # %%
-# Assigning dice numbers to the hexes
+# assigning dice numbers to the hexes
 diceSetupHexOffset = selectedGameBoard.iloc[0, 29]
 diceSetupClockwise = selectedGameBoard.iloc[0, 30]
 
-# The order of hexes on the outer ring, followed by the first hex
+# the order of hexes on the outer ring, followed by the first hex
 diceOrderRing1 = pd.DataFrame(
     [
         [-2, -4],
@@ -414,7 +489,7 @@ diceOrderRing1 = pd.DataFrame.append(
     diceOrderRing1.iloc[0:diceSetupHexOffset],
 )
 
-# The order of hexes on the middle ring, followed by the first hex
+# the order of hexes on the middle ring, followed by the first hex
 diceOrderRing2 = pd.DataFrame([[-1, -2], [1, -2], [2, 0], [1, 2], [-1, 2], [-2, 0]])
 diceOrderRing2 = pd.DataFrame.append(
     diceOrderRing2.iloc[int(diceSetupHexOffset / 2) : 6],
@@ -423,7 +498,7 @@ diceOrderRing2 = pd.DataFrame.append(
 
 diceOrderRing3 = pd.DataFrame([[0, 0]])
 
-# Setting up the order of hexes to get assigned dice numbers
+# setting up the order of hexes to get assigned dice numbers
 if diceSetupClockwise:
     diceAssignmentOrder = diceOrderRing1
     diceAssignmentOrder = diceAssignmentOrder.append(diceOrderRing2)
@@ -481,7 +556,7 @@ for index, row in diceAssignmentOrder.iterrows():
         ] = True
 
 # %%
-# Hex coordinates by ring
+# hex coordinates by ring
 HexOrder = pd.DataFrame(
     [
         # Inner ring, 1 hex
@@ -530,8 +605,8 @@ HexOrder = pd.DataFrame(
 )
 
 # %%
-# Init empty settlement/city spaces
-# The inner ring has 6 buildable locations, center ring has 18, outer ring has 30
+# init empty settlement/city spaces
+# the inner ring has 6 buildable locations, center ring has 18, outer ring has 30
 buildingLocationArray = []
 buildingNumber = 1
 ringSize = [
@@ -576,15 +651,15 @@ for index, row in buildingLocation.iterrows():
             (row["RingBuildingNum"]) % 6 - 1
         ]["yHexOffset"]
 
-        buildingLocation.at[index, "neighbor1"] = (index + 1)%6 + 1
-        buildingLocation.at[index, "neighbor2"] = (index + 5)%6 + 1
-        buildingLocation.at[index, "neighbor3"] = (index + 1)*3 + 4
+        buildingLocation.at[index, "neighbor1"] = (index + 1) % 6 + 1
+        buildingLocation.at[index, "neighbor2"] = (index + 5) % 6 + 1
+        buildingLocation.at[index, "neighbor3"] = (index + 1) * 3 + 4
 
     elif row["Ring"] == 2:
         buildingLocation.at[index, "neighbor1"] = index + 2 if index != 23 else 7
         buildingLocation.at[index, "neighbor2"] = index if index != 6 else 24
 
-        # These buildings are adjacent to two hexes on ring 2
+        # these buildings are adjacent to two hexes on ring 2
         if row["RingBuildingNum"] % 3 == 1:
             buildingLocation.at[index, "Hex1_X"] = HexOrder[HexOrder["Ring"] == 2].iloc[
                 (round(row["RingBuildingNum"] / 3) - 1) % 6
@@ -607,7 +682,7 @@ for index, row in buildingLocation.iterrows():
 
             buildingLocation.at[index, "neighbor3"] = (index - 3) / 3
 
-        # These buildings are adjacent to two hexes on ring 3
+        # these buildings are adjacent to two hexes on ring 3
         else:
             buildingLocation.at[index, "Hex1_X"] = HexOrder[HexOrder["Ring"] == 3].iloc[
                 (round((row["RingBuildingNum"] + 1) / 3 * 2) - 2) % 12
@@ -629,15 +704,19 @@ for index, row in buildingLocation.iterrows():
             ]["yHexOffset"]
 
             if row["RingBuildingNum"] % 3 == 2:
-                buildingLocation.at[index, "neighbor3"] = (row["BuildingNum"] - 2 )/3*5 + 16
+                buildingLocation.at[index, "neighbor3"] = (
+                    row["BuildingNum"] - 2
+                ) / 3 * 5 + 16
             else:
-                buildingLocation.at[index, "neighbor3"] = (row["BuildingNum"] - 3 )/3*5 + 19
+                buildingLocation.at[index, "neighbor3"] = (
+                    row["BuildingNum"] - 3
+                ) / 3 * 5 + 19
 
     elif row["Ring"] == 3:
         buildingLocation.at[index, "neighbor1"] = index + 2 if index != 53 else 25
         buildingLocation.at[index, "neighbor2"] = index if index != 24 else 54
 
-        # These buildings are adjacent to one hex on ring 3 (i.e. outer coast)
+        # these buildings are adjacent to one hex on ring 3 (i.e. outer coast)
         if row["RingBuildingNum"] % 5 != 2 & row["RingBuildingNum"] % 5 != 5:
             buildingLocation.at[index, "Hex1_X"] = HexOrder[HexOrder["Ring"] == 3].iloc[
                 (round((row["RingBuildingNum"] - 1) / 5 * 2))
@@ -658,7 +737,7 @@ for index, row in buildingLocation.iterrows():
                 (round((row["RingBuildingNum"] - 1) / 5 * 3) % 18)
             ]["yHexOffset"]
 
-        # These buildings are adjacent to two hexes on ring 3 (i.e. inner coast)
+        # these buildings are adjacent to two hexes on ring 3 (i.e. inner coast)
         elif row["RingBuildingNum"] % 5 == 2:
             buildingLocation.at[index, "Hex1_X"] = HexOrder[HexOrder["Ring"] == 3].iloc[
                 round((row["RingBuildingNum"] - row["RingBuildingNum"] % 5) / 5 * 2)
@@ -683,7 +762,9 @@ for index, row in buildingLocation.iterrows():
                 round((row["RingBuildingNum"] - 2) / 5 * 3) % 18
             ]["yHexOffset"]
 
-            buildingLocation.at[index, "neighbor3"] = (row["BuildingNum"]-1)/5*3-7
+            buildingLocation.at[index, "neighbor3"] = (
+                row["BuildingNum"] - 1
+            ) / 5 * 3 - 7
 
         elif row["RingBuildingNum"] % 5 == 0:
             buildingLocation.at[index, "Hex1_X"] = HexOrder[HexOrder["Ring"] == 3].iloc[
@@ -709,12 +790,14 @@ for index, row in buildingLocation.iterrows():
                 round(row["RingBuildingNum"] / 5 * 3 - 1) % 18
             ]["yHexOffset"]
 
-            buildingLocation.at[index, "neighbor3"] = (row["BuildingNum"]-4)/5*3-6
+            buildingLocation.at[index, "neighbor3"] = (
+                row["BuildingNum"] - 4
+            ) / 5 * 3 - 6
 
-# Calculate the value of each building location
+# calculate the value of each building location
 resourceEconValue = {"lumber": 0, "brick": 0, "sheep": 0, "wheat": 0, "rock": 0}
 
-# Calcuate the scarcity of each resource
+# calcuate the scarcity of each resource
 for index, row in hexTiles.iterrows():
     if row["hexResource"] != "desert":
         resourceEconValue[row["hexResource"]] += diceRoll.loc[row["diceNumber"], "prob"]
@@ -744,46 +827,47 @@ for index, row in buildingLocation.iterrows():
     buildingLocation.at[index, "LocValue"] = buildingLocValue
 
 # prepare unique roads
-uniqueRoads = pd.DataFrame(
-    columns = ["from", "to"]
-)
-uniqueRoads = uniqueRoads.append(
-    buildingLocation[["BuildingNum","neighbor1"]].rename(
-        columns={"BuildingNum":"from", "neighbor1":"to"}
+roadConnections = pd.DataFrame(columns=["from", "to"])
+roadConnections = roadConnections.append(
+    buildingLocation[["BuildingNum", "neighbor1"]].rename(
+        columns={"BuildingNum": "from", "neighbor1": "to"}
     )
 )
-uniqueRoads = uniqueRoads.append(
-    buildingLocation[["BuildingNum","neighbor2"]].rename(
-        columns={"BuildingNum":"from", "neighbor2":"to"}
+roadConnections = roadConnections.append(
+    buildingLocation[["BuildingNum", "neighbor2"]].rename(
+        columns={"BuildingNum": "from", "neighbor2": "to"}
     )
 )
-uniqueRoads = uniqueRoads.append(
-    buildingLocation[["BuildingNum","neighbor3"]].rename(
-        columns={"BuildingNum":"from", "neighbor3":"to"}
+roadConnections = roadConnections.append(
+    buildingLocation[["BuildingNum", "neighbor3"]].rename(
+        columns={"BuildingNum": "from", "neighbor3": "to"}
     )
 )
 # drop rows with only 2 neighbors
-uniqueRoads = uniqueRoads[uniqueRoads["to"] != 0]
-uniqueRoads.reset_index(drop = True, inplace = True)
+roadConnections = roadConnections[roadConnections["to"] != 0]
+roadConnections.reset_index(drop=True, inplace=True)
 
 # re-arrange the order of road direction:
 # always go from smaller location ID to larger location ID
-for index, row in uniqueRoads.iterrows():
+for index, row in roadConnections.iterrows():
     if row["from"] > row["to"]:
         holdingValue = row["from"]
-        uniqueRoads.at[index, "from"] = row["to"]
-        uniqueRoads.at[index, "to"] = holdingValue
+        roadConnections.at[index, "from"] = row["to"]
+        roadConnections.at[index, "to"] = holdingValue
+
 # drops the same roads
-uniqueRoads = uniqueRoads.drop_duplicates(subset = ["from", "to"])
-uniqueRoads.reset_index(drop = True, inplace = True)
-uniqueRoads["roadNum"] = uniqueRoads.index+1
-roadConnections = uniqueRoads[["roadNum", "from", "to"]]
-print(roadConnections)
+roadConnections = roadConnections.drop_duplicates(subset=["from", "to"])
+roadConnections.reset_index(drop=True, inplace=True)
+roadConnections["roadNum"] = roadConnections.index + 1
+roadConnections = roadConnections[["roadNum", "from", "to"]]
+roadConnections.loc[:, "occupiedPlayer"] = int(0)
+roadConnections.loc[:, "roadShapeObj"] = int(0)
+roadConnections.loc[:, "roadTextObj"] = int(0)
 
 
 # %%
-# Setting up the board
-# Setting up buildings
+# setting up the board
+# setting up buildings
 def SetupBoard():
     def HexClicked(hexIndex):
         global resolveRobberPending
@@ -816,13 +900,13 @@ def SetupBoard():
             # need to implement stealing here
 
     def LoadHex(hexResource, xHexOffset, yHexOffset, diceNumber, index):
-        # Calculate the center of each hex tile
+        # calculate the center of each hex tile
         xHexCenter = (
             xBoardCenter + np.sqrt(3) / 2 * radius * xHexOffset + gapSize * xHexOffset
         )
         yHexCenter = yBoardCenter + 3 / 4 * radius * yHexOffset + gapSize * yHexOffset
 
-        # Coordinates of the 6 points of the hex
+        # coordinates of the 6 points of the hex
         points = [
             xHexCenter + np.sqrt(3) / 2 * radius,
             yHexCenter - radius / 2,
@@ -845,7 +929,7 @@ def SetupBoard():
             tags="Hex" + str(index),
         )
 
-        # This is the dice roll number
+        # this is the dice roll number
         hexTiles.at[index, "diceTextObj"] = colonizer.canvas.create_text(
             xHexCenter,
             yHexCenter,
@@ -855,7 +939,7 @@ def SetupBoard():
             tags="Hex" + str(index),
         )
 
-        # This is the hex location coordinates
+        # this is the hex location coordinates
         hexTiles.at[index, "hexCoordTextObj"] = colonizer.canvas.create_text(
             xHexCenter,
             yHexCenter + radius / 3.5,
@@ -864,7 +948,7 @@ def SetupBoard():
             tags="Hex" + str(index),
         )
 
-        # This is the robber circle
+        # this is the robber circle
         hexTiles.at[index, "robberShapeObj"] = colonizer.canvas.create_oval(
             xHexCenter - radius / 7,
             yHexCenter - radius / 7,
@@ -879,7 +963,7 @@ def SetupBoard():
             "Hex" + str(index), "<Button-1>", lambda event: HexClicked(index),
         )
 
-    # Setting up hex by hex, row by row from upper left tile
+    # setting up hex by hex, row by row from upper left tile
     for index, row in hexTiles.iterrows():
         LoadHex(
             row["hexResource"],
@@ -890,7 +974,7 @@ def SetupBoard():
         )
 
     def LoadPort(portType, xHexOffset, yHexOffset, portDirection):
-        # Calculate the center of each hex tile
+        # calculate the center of each hex tile
         xHexCenter = (
             xBoardCenter + np.sqrt(3) / 2 * radius * xHexOffset + gapSize * xHexOffset
         )
@@ -960,12 +1044,11 @@ def SetupBoard():
             points, outline="#000000", fill=resourceColor[portType], width=2
         )
 
-    # Setting up ports
+    # setting up ports
     for index, row in portTiles.iterrows():
         LoadPort(
             row["portType"], row["xHexOffset"], row["yHexOffset"], row["portDirection"],
         )
-
 
     def DiceRolled(diceNumber):
         # resolve robber
@@ -986,10 +1069,18 @@ def SetupBoard():
 
                 for hexes in [1, 2, 3]:
                     nearbyBuildings = buildingLocation[
-                        (buildingLocation["Hex"+str(hexes)+"_X"] == xHexOffsetTarget)
-                        & (buildingLocation["Hex"+str(hexes)+"_Y"] == yHexOffsetTarget)
+                        (
+                            buildingLocation["Hex" + str(hexes) + "_X"]
+                            == xHexOffsetTarget
+                        )
+                        & (
+                            buildingLocation["Hex" + str(hexes) + "_Y"]
+                            == yHexOffsetTarget
+                        )
                     ]
-                    nearbyPlayers = nearbyBuildings[nearbyBuildings["OccupiedPlayer"] != 0]
+                    nearbyPlayers = nearbyBuildings[
+                        nearbyBuildings["OccupiedPlayer"] != 0
+                    ]
 
                     for index, row in nearbyPlayers.iterrows():
                         ResourceIncrement(row["OccupiedPlayer"], currentHexResource)
@@ -1013,13 +1104,12 @@ def SetupBoard():
             expectedRolls = diceRoll.loc[number, "prob"] * totalRollsThisGame
             expectedRollsPct = diceRoll.loc[number, "prob"] * 100
 
-
             if actualRollsPct > expectedRollsPct:
-                color = "#A52A2A" # red
+                color = "#A52A2A"  # red
             elif actualRollsPct < expectedRollsPct:
-                color = "#008000" # green
+                color = "#008000"  # green
             else:
-                color = "#000000" # black
+                color = "#000000"  # black
 
             colonizer.canvas.itemconfig(
                 diceRoll.loc[number, "rollStats1TextObj"],
@@ -1033,11 +1123,11 @@ def SetupBoard():
             colonizer.canvas.itemconfig(
                 diceRoll.loc[number, "rollStats2TextObj"],
                 text=str(actualRolls) + " - " "{0:0.1f}".format(actualRollsPct) + "%",
-                fill = color,
+                fill=color,
             )
 
     def SetupDiceRoll(diceNumber):
-        # Build bank & players' borders
+        # build bank & players' borders
         diceXCenter = xBoardCenter + (radius + gapSize) * 6 + gapSize * 2
         diceYCenter = gameWindowHeight / 2 + (gameWindowHeight / 13 + gapSize) * (
             diceNumber - 7
@@ -1090,7 +1180,7 @@ def SetupBoard():
             lambda event: DiceRolled(diceNumber),
         )
 
-    # Setting up dice rolls
+    # setting up dice rolls
     hexTiles["hexShapeObj"] = hexTiles["hexShapeObj"].astype(int)
     hexTiles["diceTextObj"] = hexTiles["diceTextObj"].astype(int)
     hexTiles["robberShapeObj"] = hexTiles["robberShapeObj"].astype(int)
@@ -1106,7 +1196,65 @@ def SetupBoard():
         anchor="c",
     )
 
-    # Setting up buildings
+    def SetupRoad(roadNumber, fromBuildingNum, toBuildingNum):
+        # prepare the attributes for the "from" building
+        fromBuilding = buildingLocation.iloc[fromBuildingNum - 1]
+        fromXOffset = (
+            fromBuilding["Hex1_X"] + fromBuilding["Hex2_X"] + fromBuilding["Hex3_X"]
+        ) / 3
+        fromYOffset = (
+            fromBuilding["Hex1_Y"] + fromBuilding["Hex2_Y"] + fromBuilding["Hex3_Y"]
+        ) / 3
+        fromXCenter = (
+            xBoardCenter + np.sqrt(3) / 2 * radius * fromXOffset + gapSize * fromXOffset
+        )
+        fromYCenter = (
+            yBoardCenter + 3 / 4 * radius * fromYOffset + gapSize * fromYOffset
+        )
+
+        # prepare the attributes for the "to" building
+        toBuilding = buildingLocation.iloc[toBuildingNum - 1]
+        toXOffset = (
+            toBuilding["Hex1_X"] + toBuilding["Hex2_X"] + toBuilding["Hex3_X"]
+        ) / 3
+        toYOffset = (
+            toBuilding["Hex1_Y"] + toBuilding["Hex2_Y"] + toBuilding["Hex3_Y"]
+        ) / 3
+        toXCenter = (
+            xBoardCenter + np.sqrt(3) / 2 * radius * toXOffset + gapSize * toXOffset
+        )
+        toYCenter = yBoardCenter + 3 / 4 * radius * toYOffset + gapSize * toYOffset
+
+        roadConnections.at[
+            roadNumber - 1, "roadShapeObj"
+        ] = colonizer.canvas.create_line(
+            fromXCenter,
+            fromYCenter,
+            toXCenter,
+            toYCenter,
+            width=gapSize * 1.5,
+            fill="#FFFFFF",
+            tags="Road" + str(roadNumber),
+        )
+        roadConnections.at[
+            roadNumber - 1, "roadTextObj"
+        ] = colonizer.canvas.create_text(
+            (fromXCenter + toXCenter) / 2,
+            (fromYCenter + toYCenter) / 2,
+            text="",
+            font=("Helvetica", 11),
+            tags="Road" + str(roadNumber),
+        )
+        colonizer.canvas.tag_bind(
+            "Road" + str(roadNumber),
+            "<Button-1>",
+            lambda event: StructureClicked(roadNumber),
+        )
+
+    for index, row in roadConnections.iterrows():
+        SetupRoad(row["roadNum"], row["from"], row["to"])
+
+    # setting up buildings
     def SetupBuilding(buildingNumber, x, y, r, printText, color):
         # setup settlement circle
         x0 = x - r * 2.5
@@ -1116,8 +1264,7 @@ def SetupBoard():
         buildingLocation.at[
             buildingNumber - 1, "buildingShapeObj"
         ] = colonizer.canvas.create_oval(
-            x0, y0, x1, y1, fill=color, tags="Building" + str(buildingNumber),
-            width=1
+            x0, y0, x1, y1, fill=color, tags="Building" + str(buildingNumber), width=1
         )
 
         # setup texts
@@ -1133,30 +1280,32 @@ def SetupBoard():
         colonizer.canvas.tag_bind(
             "Building" + str(buildingNumber),
             "<Button-1>",
-            lambda event: BuildingClicked(buildingNumber),
+            lambda event: StructureClicked(buildingNumber),
         )
 
-
-    def BuildingClicked(buildingNumber):
+    def StructureClicked(structureNumber):
         global currentActivePlayer, currentAction
 
         if currentAction == "Road":
-            print(currentActivePlayer, "wants to build a road")
+            # mark the player
+            roadConnections.at[
+                structureNumber - 1, "occupiedPlayer"
+            ] = currentActivePlayer
+            # color the building location
+            colonizer.canvas.itemconfig(
+                roadConnections.at[structureNumber - 1, "roadShapeObj"],
+                fill=playerColor[playerStats.loc[currentActivePlayer, "color",]],
+            )
 
         elif currentAction == "Settlement":
             # mark the player
             buildingLocation.at[
-                buildingNumber - 1, "OccupiedPlayer"
+                structureNumber - 1, "OccupiedPlayer"
             ] = currentActivePlayer
             # color the building location
             colonizer.canvas.itemconfig(
-                buildingLocation.at[buildingNumber - 1, "buildingShapeObj"],
-                fill=playerColor[
-                    playerStats.loc[
-                        buildingLocation.loc[buildingNumber - 1, "OccupiedPlayer"],
-                        "color",
-                    ]
-                ],
+                buildingLocation.at[structureNumber - 1, "buildingShapeObj"],
+                fill=playerColor[playerStats.loc[currentActivePlayer, "color",]],
             )
 
             UpdateEconProdValue()
@@ -1164,21 +1313,14 @@ def SetupBoard():
         elif currentAction == "City":
             # mark the player
             buildingLocation.at[
-                buildingNumber - 1, "OccupiedPlayer"
+                structureNumber - 1, "OccupiedPlayer"
             ] = currentActivePlayer
-            buildingLocation.at[
-                buildingNumber - 1, "isCity"
-            ] = True
+            buildingLocation.at[structureNumber - 1, "isCity"] = True
             # color the building location and change the thickness
             colonizer.canvas.itemconfig(
-                buildingLocation.at[buildingNumber - 1, "buildingShapeObj"],
-                fill=playerColor[
-                    playerStats.loc[
-                        buildingLocation.loc[buildingNumber - 1, "OccupiedPlayer"],
-                        "color",
-                    ]
-                ],
-                width = 5,
+                buildingLocation.at[structureNumber - 1, "buildingShapeObj"],
+                fill=playerColor[playerStats.loc[currentActivePlayer, "color",]],
+                width=5,
             )
 
             UpdateEconProdValue()
@@ -1191,7 +1333,7 @@ def SetupBoard():
         currentActivePlayer = None
 
     for index, row in buildingLocation.iterrows():
-        # Calculate the center of each hex tile
+        # calculate the center of each hex tile
         xOffset = (row["Hex1_X"] + row["Hex2_X"] + row["Hex3_X"]) / 3
         yOffset = (row["Hex1_Y"] + row["Hex2_Y"] + row["Hex3_Y"]) / 3
         xCenter = xBoardCenter + np.sqrt(3) / 2 * radius * xOffset + gapSize * xOffset
@@ -1206,17 +1348,6 @@ def SetupBoard():
             "#FFFFFF",
         )
 
-
-    def SetupRoad(fromBuildingNum, toBuildingNum):
-        print("setup road from building", str(fromBuildingNum), "to", str(toBuildingNum))
-        # colonizer.create_line()
-
-
-    # for index, row in uniqueRoads.iterrows():
-    #     SetupRoad(row["from"], row["to"])
-    SetupRoad(1, 2)
-
-
     def UpdateEconProdValue():
         # reset all production stats
         for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
@@ -1227,13 +1358,14 @@ def SetupBoard():
             if row["OccupiedPlayer"] != 0:
                 for nearbyHexNum in ["1", "2", "3"]:
                     currentHexValue = HexValueInfo(
-                        row["Hex"+nearbyHexNum+"_X"], row["Hex"+nearbyHexNum+"_Y"]
+                        row["Hex" + nearbyHexNum + "_X"],
+                        row["Hex" + nearbyHexNum + "_Y"],
                     )
 
                     if currentHexValue[0] != "No Resource":
                         valueOfHex = currentHexValue[1] * (2 if row["isCity"] else 1)
                         playerStats.loc[
-                            row["OccupiedPlayer"], currentHexValue[0]+"Prod"
+                            row["OccupiedPlayer"], currentHexValue[0] + "Prod"
                         ] += valueOfHex
 
         # add up the total economic power by summing over players
@@ -1246,7 +1378,7 @@ def SetupBoard():
         for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
             colonizer.canvas.itemconfig(
                 playerStats.loc[0, resourceType + "ProdObj"],
-                text="+" + "{0:0.3f}".format(playerStats.loc[0, resourceType + "Prod"])
+                text="+" + "{0:0.3f}".format(playerStats.loc[0, resourceType + "Prod"]),
             )
 
         for playerID in [1, 2, 3, 4]:
@@ -1254,7 +1386,10 @@ def SetupBoard():
                 if playerStats.loc[playerID, "inPlay"]:
                     colonizer.canvas.itemconfig(
                         playerStats.loc[playerID, resourceType + "ProdObj"],
-                        text="+" + "{0:0.3f}".format(playerStats.loc[playerID, resourceType + "Prod"])
+                        text="+"
+                        + "{0:0.3f}".format(
+                            playerStats.loc[playerID, resourceType + "Prod"]
+                        ),
                     )
 
 
@@ -1276,7 +1411,7 @@ def HexValueInfo(X_coor, Y_coor):
         return [hexResource, diceRoll.loc[diceNumber, "prob"]]
 
 
-# To increment and decrement resources
+# to increment and decrement resources
 def ResourceIncrement(playerID, resourceType):
     if playerStats.at[0, resourceType] > 0:
         playerStats.at[playerID, resourceType] += 1
@@ -1330,7 +1465,7 @@ def SetupPlayerStatsTracker():
 
         resourceOffset = {"lumber": 0, "brick": 1, "sheep": 2, "wheat": 3, "rock": 4}
 
-        # Building the resource box with button and commands
+        # building the resource box with button and commands
         colonizer.canvas.create_polygon(
             [
                 top_left_x + 230 + resourceOffset[resourceType] * 70,
@@ -1367,7 +1502,7 @@ def SetupPlayerStatsTracker():
             lambda event: ResourceDecrement(playerID, resourceType),
         )
 
-        # Production value
+        # production value
         playerStats.at[
             playerID, resourceType + "ProdObj"
         ] = colonizer.canvas.create_text(
@@ -1384,7 +1519,7 @@ def SetupPlayerStatsTracker():
         top_left_x = PlayerBoraderTopLeftCoord(playerID)[0]
         top_left_y = PlayerBoraderTopLeftCoord(playerID)[1]
 
-        # Player color selector
+        # player color selector
         if playerID == 0:
             # Show player ID and color
             colonizer.canvas.create_text(
@@ -1397,7 +1532,7 @@ def SetupPlayerStatsTracker():
                 playerStats.at[playerID, "inPlay"] = True
                 SetupPlayerInit(playerID)
 
-            # Show player ID and color
+            # show player ID and color
             colonizer.canvas.create_text(
                 top_left_x + 10,
                 top_left_y + 15,
@@ -1405,7 +1540,7 @@ def SetupPlayerStatsTracker():
                 anchor="w",
             )
 
-            # Assigns color to a player with a dropdown menu
+            # assigns color to a player with a dropdown menu
             playerIDColor = tk.StringVar()
             playerIDColor.set("Select Color")
             playerColorDropdown = tk.OptionMenu(
@@ -1415,7 +1550,7 @@ def SetupPlayerStatsTracker():
             playerColorDropdown.place(x=top_left_x + 70, y=top_left_y + 15, anchor="w")
 
     def SetupPurchaseTiles(playerID, item):
-        # Building buttons
+        # building buttons
         itemOffset = {"Road": 0, "Settlement": 1, "City": 2, "Dev_Card": 3}
         colonizer.canvas.create_polygon(
             [
@@ -1463,11 +1598,11 @@ def SetupPlayerStatsTracker():
                 font=("Helvetica", 12),
             )
 
-        # Resource trackers
+        # resource trackers
         for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
             SetupResourceButton(playerID, resourceType)
 
-        # Total resource
+        # total resource
         colonizer.canvas.create_polygon(
             [
                 PlayerBoraderTopLeftCoord(playerID)[0] + 230 + 5 * 70,
@@ -1498,7 +1633,7 @@ def SetupPlayerStatsTracker():
         )
 
     for playerID in [0, 1, 2, 3, 4]:
-        # Build bank & players' borders
+        # build bank & players' borders
         colonizer.canvas.create_polygon(
             [
                 PlayerBoraderTopLeftCoord(playerID)[0],
@@ -1520,7 +1655,7 @@ def SetupPlayerStatsTracker():
 
 
 # %%
-# Init game
+# init game
 SetupBoard()
 SetupPlayerStatsTracker()
 colonizer.mainloop()
