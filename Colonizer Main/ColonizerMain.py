@@ -374,7 +374,6 @@ playerStats = pd.DataFrame(
         "road": [0, 15, 15, 15, 15],
         "settlement": [0, 5, 5, 5, 5],
         "city": [0, 4, 4, 4, 4],
-        "hiddenDevCard": [25, 0, 0, 0, 0],
         "lumber": [19, 0, 0, 0, 0],
         "brick": [19, 0, 0, 0, 0],
         "sheep": [19, 0, 0, 0, 0],
@@ -386,6 +385,16 @@ playerStats = pd.DataFrame(
         "wheatProd": [0, 0, 0, 0, 0],
         "rockProd": [0, 0, 0, 0, 0],
         "totalProd": [0, 0, 0, 0, 0],
+        "playedKnight": [14, 0, 0, 0, 0],
+        "playedVictoryPoint": [5, 0, 0, 0, 0],
+        "playedMonopoly": [2, 0, 0, 0, 0],
+        "playedRoadBuilding": [2, 0, 0, 0, 0],
+        "playedYearOfPlenty": [2, 0, 0, 0, 0],
+        "unplayedKnight": [0, 0, 0, 0, 0],
+        "unplayedVictoryPoint": [0, 0, 0, 0, 0],
+        "unplayedMonopoly": [0, 0, 0, 0, 0],
+        "unplayedRoadBuilding": [0, 0, 0, 0, 0],
+        "unplayed YearOfPlenty": [0, 0, 0, 0, 0],
         "lumberObj": [0, 0, 0, 0, 0],
         "brickObj": [0, 0, 0, 0, 0],
         "sheepObj": [0, 0, 0, 0, 0],
@@ -871,12 +880,6 @@ roadConnections.loc[:, "roadTextObj"] = int(0)
 def SetupBoard():
     def HexClicked(hexIndex):
         global resolveRobberPending
-
-        print(
-            hexTiles.loc[hexIndex, "diceNumber"],
-            hexTiles.loc[hexIndex, "hexResource"],
-            "clicked",
-        )
 
         if resolveRobberPending:
             # remove the current robber
@@ -1459,61 +1462,67 @@ def SetupPlayerStatsTracker():
             gameWindowHeight / 5 * playerID + 3,
         ]
 
-    def SetupResourceButton(playerID, resourceType):
+    def SetupCardButton(playerID, itemType, isResource):
         top_left_x = PlayerBoraderTopLeftCoord(playerID)[0]
         top_left_y = PlayerBoraderTopLeftCoord(playerID)[1]
 
-        resourceOffset = {"lumber": 0, "brick": 1, "sheep": 2, "wheat": 3, "rock": 4}
+        itemXOffset = {
+            "lumber": 0, "brick": 1, "sheep": 2, "wheat": 3, "rock": 4,
+            "Knight": 0, "VictoryPoint": 1, "Monopoly": 2, "RoadBuilding": 3, "YearOfPlenty": 4
+        }
 
         # building the resource box with button and commands
         colonizer.canvas.create_polygon(
             [
-                top_left_x + 230 + resourceOffset[resourceType] * 70,
-                top_left_y + 5,
-                top_left_x + 280 + resourceOffset[resourceType] * 70,
-                top_left_y + 5,
-                top_left_x + 280 + resourceOffset[resourceType] * 70,
-                top_left_y + 85,
-                top_left_x + 230 + resourceOffset[resourceType] * 70,
-                top_left_y + 85,
+                top_left_x + 230 + itemXOffset[itemType] * 70,
+                top_left_y + 5 + (0 if isResource else 90),
+                top_left_x + 280 + itemXOffset[itemType] * 70,
+                top_left_y + 5 + (0 if isResource else 90),
+                top_left_x + 280 + itemXOffset[itemType] * 70,
+                top_left_y + 85 + (0 if isResource else 90),
+                top_left_x + 230 + itemXOffset[itemType] * 70,
+                top_left_y + 85 + (0 if isResource else 90),
             ],
             outline="#000000",
-            fill=resourceColor[resourceType],
-            tags="PlayerID" + str(playerID) + "Resource" + resourceType,
+            fill=resourceColor[itemType] if isResource else "",
+            tags="PlayerID" + str(playerID) + "Resource" + itemType,
         )
-        playerStats.at[playerID, resourceType + "Obj"] = colonizer.canvas.create_text(
+
+        # print the number of resource or development card type
+        playerStats.at[playerID, itemType + "Obj"] = colonizer.canvas.create_text(
             PlayerBoraderTopLeftCoord(playerID)[0]
             + (230 + 280) / 2
-            + resourceOffset[resourceType] * 70,
-            PlayerBoraderTopLeftCoord(playerID)[1] + 25,
-            text=playerStats.at[playerID, resourceType],
+            + itemXOffset[itemType] * 70,
+            PlayerBoraderTopLeftCoord(playerID)[1] + 25 + (0 if isResource else 90),
+            text=playerStats.at[playerID, itemType] if isResource else playerStats.at[playerID, "played"+itemType],
             anchor="c",
-            font=("Helvetica", 16),
-            tags="PlayerID" + str(playerID) + "Resource" + resourceType,
+            font=("Helvetica", 24),
+            tags="PlayerID" + str(playerID) + "Item" + itemType,
         )
         colonizer.canvas.tag_bind(
-            "PlayerID" + str(playerID) + "Resource" + resourceType,
+            "PlayerID" + str(playerID) + "Item" + itemType,
             "<Button-1>",
-            lambda event: ResourceIncrement(playerID, resourceType),
+            lambda event: ResourceIncrement(playerID, itemType),
         )
         colonizer.canvas.tag_bind(
-            "PlayerID" + str(playerID) + "Resource" + resourceType,
+            "PlayerID" + str(playerID) + "Item" + itemType,
             "<Button-2>",
-            lambda event: ResourceDecrement(playerID, resourceType),
+            lambda event: ResourceDecrement(playerID, itemType),
         )
 
         # production value
         playerStats.at[
-            playerID, resourceType + "ProdObj"
+            playerID, itemType + "ProdObj"
         ] = colonizer.canvas.create_text(
             PlayerBoraderTopLeftCoord(playerID)[0]
             + (230 + 280) / 2
-            + resourceOffset[resourceType] * 70,
-            PlayerBoraderTopLeftCoord(playerID)[1] + 45,
-            text="+0.000",
+            + itemXOffset[itemType] * 70,
+            PlayerBoraderTopLeftCoord(playerID)[1] + 45 + (0 if isResource else 90),
+            text="+0.000" if isResource else itemType,
             anchor="c",
-            font=("Helvetica", 12),
+            font=("Helvetica", 12 if isResource else 8),
         )
+
 
     def SetupPlayerColor(playerID):
         top_left_x = PlayerBoraderTopLeftCoord(playerID)[0]
@@ -1598,9 +1607,13 @@ def SetupPlayerStatsTracker():
                 font=("Helvetica", 12),
             )
 
-        # resource trackers
+        # resource tracker
         for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
-            SetupResourceButton(playerID, resourceType)
+            SetupCardButton(playerID, resourceType, True)
+
+        # development cards tracker
+        for devCardType in ["Knight", "VictoryPoint", "Monopoly", "RoadBuilding", "YearOfPlenty"]:
+            SetupCardButton(playerID, devCardType, False)
 
         # total resource
         colonizer.canvas.create_polygon(
@@ -1622,7 +1635,7 @@ def SetupPlayerStatsTracker():
             PlayerBoraderTopLeftCoord(playerID)[1] + 25,
             text="" if playerID == 0 else "0",
             anchor="c",
-            font=("Helvetica", 16),
+            font=("Helvetica", 24),
         )
         playerStats.at[playerID, "resourceTotalProdObj"] = colonizer.canvas.create_text(
             PlayerBoraderTopLeftCoord(playerID)[0] + (230 + 280) / 2 + 5 * 70,
