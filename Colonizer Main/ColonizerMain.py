@@ -379,28 +379,30 @@ playerStats = pd.DataFrame(
         "sheep": [19, 0, 0, 0, 0],
         "wheat": [19, 0, 0, 0, 0],
         "rock": [19, 0, 0, 0, 0],
+        "resourceTotalObj": [0, 0, 0, 0, 0],
         "lumberProd": [0, 0, 0, 0, 0],
         "brickProd": [0, 0, 0, 0, 0],
         "sheepProd": [0, 0, 0, 0, 0],
         "wheatProd": [0, 0, 0, 0, 0],
         "rockProd": [0, 0, 0, 0, 0],
         "totalProd": [0, 0, 0, 0, 0],
-        "playedKnight": [14, 0, 0, 0, 0],
-        "playedVictoryPoint": [5, 0, 0, 0, 0],
-        "playedMonopoly": [2, 0, 0, 0, 0],
-        "playedRoadBuilding": [2, 0, 0, 0, 0],
-        "playedYearOfPlenty": [2, 0, 0, 0, 0],
-        "unplayedKnight": [0, 0, 0, 0, 0],
-        "unplayedVictoryPoint": [0, 0, 0, 0, 0],
-        "unplayedMonopoly": [0, 0, 0, 0, 0],
-        "unplayedRoadBuilding": [0, 0, 0, 0, 0],
-        "unplayed YearOfPlenty": [0, 0, 0, 0, 0],
+        "acquiredKnight": [14, 0, 0, 0, 0],
+        "acquiredVictoryPoint": [5, 0, 0, 0, 0],
+        "acquiredMonopoly": [2, 0, 0, 0, 0],
+        "acquiredRoadBuilding": [2, 0, 0, 0, 0],
+        "acquiredYearOfPlenty": [2, 0, 0, 0, 0],
+        "acquiredDevCardTotal": [25, 0, 0, 0, 0],
+        "acquiredDevCardTotalObj": [0, 0, 0, 0, 0],
+        "playedKnight": [0, 0, 0, 0, 0],
+        "playedVictoryPoint": [0, 0, 0, 0, 0],
+        "playedMonopoly": [0, 0, 0, 0, 0],
+        "playedRoadBuilding": [0, 0, 0, 0, 0],
+        "playedYearOfPlenty": [0, 0, 0, 0, 0],
         "lumberObj": [0, 0, 0, 0, 0],
         "brickObj": [0, 0, 0, 0, 0],
         "sheepObj": [0, 0, 0, 0, 0],
         "wheatObj": [0, 0, 0, 0, 0],
         "rockObj": [0, 0, 0, 0, 0],
-        "resourceTotalObj": [0, 0, 0, 0, 0],
         "lumberProdObj": [0, 0, 0, 0, 0],
         "brickProdObj": [0, 0, 0, 0, 0],
         "sheepProdObj": [0, 0, 0, 0, 0],
@@ -1450,9 +1452,26 @@ def ResourceDecrement(playerID, resourceType):
 
 
 def PurchaseItem(playerID, purchaseItem):
-    global currentActivePlayer, currentAction
-    currentActivePlayer = playerID
-    currentAction = purchaseItem
+    print("player", playerID, "buys", purchaseItem)
+    # resolve develpoment card purchase right away
+    if purchaseItem == "Dev_Card":
+        playerStats.loc[playerID, "acquiredDevCardTotal"] += 1
+        colonizer.canvas.itemconfig(
+            playerStats.at[playerID, "acquiredDevCardTotalObj"],
+            text = playerStats.loc[playerID, "acquiredDevCardTotal"],
+        )
+
+        playerStats.loc[0, "acquiredDevCardTotal"] -= 1
+        colonizer.canvas.itemconfig(
+            playerStats.at[0, "acquiredDevCardTotalObj"],
+            text = playerStats.loc[0, "acquiredDevCardTotal"],
+        )
+
+    # buying a structure, requires further instruction (i.e. which structure)
+    else:
+        global currentActivePlayer, currentAction
+        currentActivePlayer = playerID
+        currentAction = purchaseItem
 
 
 def SetupPlayerStatsTracker():
@@ -1461,6 +1480,14 @@ def SetupPlayerStatsTracker():
             xBoardCenter + (radius + gapSize) * 7,
             gameWindowHeight / 5 * playerID + 3,
         ]
+
+    def DevCardAcquired(playerID, itemType):
+        print(playerID, "acquired dev card", itemType)
+
+
+    def DevCardUsed(playerID, itemType):
+        print(playerID, "used dev card", itemType)
+
 
     def SetupCardButton(playerID, itemType, isResource):
         top_left_x = PlayerBoraderTopLeftCoord(playerID)[0]
@@ -1484,7 +1511,7 @@ def SetupPlayerStatsTracker():
                 top_left_y + 85 + (0 if isResource else 90),
             ],
             outline="#000000",
-            fill=resourceColor[itemType] if isResource else "",
+            fill=resourceColor[itemType] if isResource else resourceColor["desert"],
             tags="PlayerID" + str(playerID) + "Resource" + itemType,
         )
 
@@ -1494,7 +1521,7 @@ def SetupPlayerStatsTracker():
             + (230 + 280) / 2
             + itemXOffset[itemType] * 70,
             PlayerBoraderTopLeftCoord(playerID)[1] + 25 + (0 if isResource else 90),
-            text=playerStats.at[playerID, itemType] if isResource else playerStats.at[playerID, "played"+itemType],
+            text=playerStats.at[playerID, itemType] if isResource else playerStats.at[playerID, "acquired"+itemType],
             anchor="c",
             font=("Helvetica", 24),
             tags="PlayerID" + str(playerID) + "Item" + itemType,
@@ -1502,12 +1529,12 @@ def SetupPlayerStatsTracker():
         colonizer.canvas.tag_bind(
             "PlayerID" + str(playerID) + "Item" + itemType,
             "<Button-1>",
-            lambda event: ResourceIncrement(playerID, itemType),
+            lambda event: ResourceIncrement(playerID, itemType) if isResource else DevCardAcquired(playerID, itemType),
         )
         colonizer.canvas.tag_bind(
             "PlayerID" + str(playerID) + "Item" + itemType,
             "<Button-2>",
-            lambda event: ResourceDecrement(playerID, itemType),
+            lambda event: ResourceDecrement(playerID, itemType) if isResource else DevCardUsed(playerID, itemType),
         )
 
         # production value
@@ -1628,7 +1655,7 @@ def SetupPlayerStatsTracker():
                 PlayerBoraderTopLeftCoord(playerID)[1] + 85,
             ],
             outline="#000000",
-            fill="#4371FF",
+            fill="#4371FF", #blue
         )
         playerStats.at[playerID, "resourceTotalObj"] = colonizer.canvas.create_text(
             PlayerBoraderTopLeftCoord(playerID)[0] + (230 + 280) / 2 + 5 * 70,
@@ -1643,6 +1670,36 @@ def SetupPlayerStatsTracker():
             text="+0.000",
             anchor="c",
             font=("Helvetica", 12),
+        )
+
+        # total dev cards
+        colonizer.canvas.create_polygon(
+            [
+                PlayerBoraderTopLeftCoord(playerID)[0] + 230 + 5 * 70,
+                PlayerBoraderTopLeftCoord(playerID)[1] + 5 + 90,
+                PlayerBoraderTopLeftCoord(playerID)[0] + 280 + 5 * 70,
+                PlayerBoraderTopLeftCoord(playerID)[1] + 5 + 90,
+                PlayerBoraderTopLeftCoord(playerID)[0] + 280 + 5 * 70,
+                PlayerBoraderTopLeftCoord(playerID)[1] + 85 + 90,
+                PlayerBoraderTopLeftCoord(playerID)[0] + 230 + 5 * 70,
+                PlayerBoraderTopLeftCoord(playerID)[1] + 85 + 90,
+            ],
+            outline="#000000",
+            fill=resourceColor["desert"],
+        )
+        playerStats.at[playerID, "acquiredDevCardTotalObj"] = colonizer.canvas.create_text(
+            PlayerBoraderTopLeftCoord(playerID)[0] + (230 + 280) / 2 + 5 * 70,
+            PlayerBoraderTopLeftCoord(playerID)[1] + 25 + 90,
+            text=playerStats.loc[playerID, "acquiredDevCardTotal"],
+            anchor="c",
+            font=("Helvetica", 24),
+        )
+        playerStats.at[playerID, "resourceTotalProdObj"] = colonizer.canvas.create_text(
+            PlayerBoraderTopLeftCoord(playerID)[0] + (230 + 280) / 2 + 5 * 70,
+            PlayerBoraderTopLeftCoord(playerID)[1] + 45 + 90,
+            text="Dev Cards",
+            anchor="c",
+            font=("Helvetica", 8),
         )
 
     for playerID in [0, 1, 2, 3, 4]:
