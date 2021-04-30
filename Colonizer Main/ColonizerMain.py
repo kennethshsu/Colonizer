@@ -409,6 +409,12 @@ playerStats = pd.DataFrame(
         "wheatProdObj": [0, 0, 0, 0, 0],
         "rockProdObj": [0, 0, 0, 0, 0],
         "resourceTotalProdObj": [0, 0, 0, 0, 0],
+        "devCardsTotalObj": [0, 0, 0, 0, 0],
+        "probKnightObj": [0, 0, 0, 0, 0],
+        "probVictoryPointObj": [0, 0, 0, 0, 0],
+        "probMonopolyObj": [0, 0, 0, 0, 0],
+        "probRoadBuildingObj": [0, 0, 0, 0, 0],
+        "probYearOfPlentyObj": [0, 0, 0, 0, 0],
         "initPositionScoreObj": [0, 0, 0, 0, 0],
     }
 )
@@ -1313,7 +1319,7 @@ def SetupBoard():
                 fill=playerColor[playerStats.loc[currentActivePlayer, "color",]],
             )
 
-            UpdateEconProdValue()
+            UpdatePlayerStats()
 
         elif currentAction == "City":
             # mark the player
@@ -1328,7 +1334,7 @@ def SetupBoard():
                 width=5,
             )
 
-            UpdateEconProdValue()
+            UpdatePlayerStats()
 
         elif currentAction == "Dev_Card":
             print(currentActivePlayer, "wants to buy a dev card")
@@ -1353,49 +1359,83 @@ def SetupBoard():
             "#FFFFFF",
         )
 
-    def UpdateEconProdValue():
-        # reset all production stats
-        for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
-            playerStats[resourceType + "Prod"] = 0
+def UpdatePlayerStats():
+    # reset all production stats
+    for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
+        playerStats[resourceType + "Prod"] = 0
 
-        # loop through all buildingLocation to calculate only players' economic power
-        for index, row in buildingLocation.iterrows():
-            if row["OccupiedPlayer"] != 0:
-                for nearbyHexNum in ["1", "2", "3"]:
-                    currentHexValue = HexValueInfo(
-                        row["Hex" + nearbyHexNum + "_X"],
-                        row["Hex" + nearbyHexNum + "_Y"],
-                    )
+    # loop through all buildingLocation to calculate only players' economic power
+    for index, row in buildingLocation.iterrows():
+        if row["OccupiedPlayer"] != 0:
+            for nearbyHexNum in ["1", "2", "3"]:
+                currentHexValue = HexValueInfo(
+                    row["Hex" + nearbyHexNum + "_X"],
+                    row["Hex" + nearbyHexNum + "_Y"],
+                )
 
-                    if currentHexValue[0] != "No Resource":
-                        valueOfHex = currentHexValue[1] * (2 if row["isCity"] else 1)
-                        playerStats.loc[
-                            row["OccupiedPlayer"], currentHexValue[0] + "Prod"
-                        ] += valueOfHex
+                if currentHexValue[0] != "No Resource":
+                    valueOfHex = currentHexValue[1] * (2 if row["isCity"] else 1)
+                    playerStats.loc[
+                        row["OccupiedPlayer"], currentHexValue[0] + "Prod"
+                    ] += valueOfHex
 
-        # add up the total economic power by summing over players
-        for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
-            playerStats.loc[0, resourceType + "Prod"] = sum(
-                playerStats.loc[1:4, resourceType + "Prod"]
-            )
-
-        # print to the screen
-        for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
-            colonizer.canvas.itemconfig(
-                playerStats.loc[0, resourceType + "ProdObj"],
-                text="+" + "{0:0.3f}".format(playerStats.loc[0, resourceType + "Prod"]),
-            )
-
-        for playerID in [1, 2, 3, 4]:
+    # print by player
+    for playerID in [1, 2, 3, 4]:
+        if playerStats.loc[playerID, "inPlay"]:
+            playerTotalResource = 0
+            playerTotalEconProd = 0
             for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
-                if playerStats.loc[playerID, "inPlay"]:
-                    colonizer.canvas.itemconfig(
-                        playerStats.loc[playerID, resourceType + "ProdObj"],
-                        text="+"
-                        + "{0:0.3f}".format(
-                            playerStats.loc[playerID, resourceType + "Prod"]
-                        ),
-                    )
+                playerTotalResource += playerStats.loc[playerID, resourceType]
+                colonizer.canvas.itemconfig(
+                    playerStats.loc[playerID, resourceType + "Obj"],
+                    text = str(playerStats.loc[playerID, resourceType])
+                )
+                playerTotalEconProd += playerStats.loc[playerID, resourceType + "Prod"]
+                colonizer.canvas.itemconfig(
+                    playerStats.loc[playerID, resourceType + "ProdObj"],
+                    text="+"
+                    + "{0:0.3f}".format(
+                        playerStats.loc[playerID, resourceType + "Prod"]
+                    ),
+                )
+
+            # print player's total resources
+            colonizer.canvas.itemconfig(
+                playerStats.loc[playerID, "resourceTotalObj"],
+                text = str(playerTotalResource)
+            )
+            # print player's total production
+            colonizer.canvas.itemconfig(
+                playerStats.loc[playerID, "resourceTotalProdObj"],
+                text = "+"
+                    + "{0:0.3f}".format(playerTotalEconProd),
+            )
+
+    # print the total (bank)
+    totalEconProd = 0
+    for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
+        # add up the total economic power by summing over players
+        playerStats.loc[0, resourceType + "Prod"] = sum(
+            playerStats.loc[1:4, resourceType + "Prod"]
+        )
+        colonizer.canvas.itemconfig(
+            playerStats.loc[0, resourceType + "ProdObj"],
+            text="+" + "{0:0.3f}".format(playerStats.loc[0, resourceType + "Prod"]),
+        )
+
+        # print current resource's total count
+        colonizer.canvas.itemconfig(
+            playerStats.loc[0, resourceType + "Obj"],
+            text = str(playerStats.loc[0, resourceType])
+        )
+
+        # track all resources total count
+        totalEconProd += playerStats.loc[0, resourceType + "Prod"]
+
+    colonizer.canvas.itemconfig(
+        playerStats.loc[0, "resourceTotalProdObj"],
+        text = "+" + "{0:0.3f}".format(totalEconProd),
+    )
 
 
 # %%
@@ -1416,40 +1456,27 @@ def HexValueInfo(X_coor, Y_coor):
         return [hexResource, diceRoll.loc[diceNumber, "prob"]]
 
 
-# to increment and decrement resources
 def ResourceIncrement(playerID, resourceType):
     if playerStats.at[0, resourceType] > 0:
         playerStats.at[playerID, resourceType] += 1
         playerStats.at[0, resourceType] -= 1
-    colonizer.canvas.itemconfig(
-        playerStats.at[playerID, resourceType + "Obj"],
-        text=playerStats.at[playerID, resourceType],
-    )
-    colonizer.canvas.itemconfig(
-        playerStats.at[playerID, "resourceTotalObj"],
-        text=sum(playerStats.iloc[playerID, 12:17]),
-    )
-    colonizer.canvas.itemconfig(
-        playerStats.at[0, resourceType + "Obj"], text=playerStats.at[0, resourceType]
-    )
+    UpdatePlayerStats()
 
 
 def ResourceDecrement(playerID, resourceType):
     if playerStats.at[playerID, resourceType] > 0:
         playerStats.at[playerID, resourceType] -= 1
         playerStats.at[0, resourceType] += 1
-    colonizer.canvas.itemconfig(
-        playerStats.at[playerID, resourceType + "Obj"],
-        text=playerStats.at[playerID, resourceType],
-    )
-    colonizer.canvas.itemconfig(
-        playerStats.at[playerID, "resourceTotalObj"],
-        text=sum(playerStats.iloc[playerID, 12:17]),
-    )
-    colonizer.canvas.itemconfig(
-        playerStats.at[0, resourceType + "Obj"], text=playerStats.at[0, resourceType]
-    )
+    UpdatePlayerStats()
 
+
+def DevCardAcquired(playerID, itemType):
+    print(playerID, "acquired dev card", itemType)
+
+
+def DevCardUsed(playerID, itemType):
+    print(playerID, "used dev card", itemType)
+    # playerStats.loc[playerID, ""]
 
 def PurchaseItem(playerID, purchaseItem):
     print("player", playerID, "buys", purchaseItem)
@@ -1481,12 +1508,7 @@ def SetupPlayerStatsTracker():
             gameWindowHeight / 5 * playerID + 3,
         ]
 
-    def DevCardAcquired(playerID, itemType):
-        print(playerID, "acquired dev card", itemType)
 
-
-    def DevCardUsed(playerID, itemType):
-        print(playerID, "used dev card", itemType)
 
 
     def SetupCardButton(playerID, itemType, isResource):
@@ -1512,7 +1534,7 @@ def SetupPlayerStatsTracker():
             ],
             outline="#000000",
             fill=resourceColor[itemType] if isResource else resourceColor["desert"],
-            tags="PlayerID" + str(playerID) + "Resource" + itemType,
+            tags="PlayerID" + str(playerID) + "Item" + itemType,
         )
 
         # print the number of resource or development card type
@@ -1694,7 +1716,7 @@ def SetupPlayerStatsTracker():
             anchor="c",
             font=("Helvetica", 24),
         )
-        playerStats.at[playerID, "resourceTotalProdObj"] = colonizer.canvas.create_text(
+        playerStats.at[playerID, "devCardsTotalObj"] = colonizer.canvas.create_text(
             PlayerBoraderTopLeftCoord(playerID)[0] + (230 + 280) / 2 + 5 * 70,
             PlayerBoraderTopLeftCoord(playerID)[1] + 45 + 90,
             text="Dev Cards",
