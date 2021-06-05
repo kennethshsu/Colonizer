@@ -17,7 +17,9 @@ This app is built in Python and uses [tkinter](https://docs.python.org/3/library
 
 ## Feedback & Contribution
 
-Contributions are always welcome! Please read the contribution guidelines first.
+While this is my first major project using Python, I really would appreciate any feedback that you may have. Feedback both good or bad will help me learn and get better.
+
+Contributions are welcome as well. I love cooperating with people and get new ideas!
 
 ## License
 [MIT](https://github.com/kennethshsu/Colonizer/blob/main/LICENSE.md)
