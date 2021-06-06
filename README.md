@@ -11,16 +11,29 @@ This app is built in Python and uses [tkinter](https://docs.python.org/3/library
 
 Games should be loaded using the GameBoards.xlsx file, 1 game per row.
 
-For example, if we are trying to load the below game as game 1:
-![GitHub Logo](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Setup%20Example.png)
-Format: ![Alt Text](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Setup%20Example.png)
+For example, if we are trying to load this game as game 1:
 
-![alt text](http://url/to/img.png)
+![_](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Setup%20Example.png)
 
-1. In the GameBoards file, we will put 1 in column A
-2. Columns B:T will be the resource tiles
-3. Game resource tiles should be recorded, from left to right, row by row. For example, the game below will be recorded as (row 1) Lumber, Brick, Rock, (row 2) Sheep, Wood, Sheep, Wheat...
-4.
+
+1. In the GameBoards file, column A will be the (sequential) ID of the game.
+  * For this game, we will put 1 in column A
+
+
+2. Columns B:T will be the resource tiles, which should be recorded from left to right, then row by row. Note the resources need to be named as Lumber, Brick, Sheep, Wheat, Rock, and Desert.
+  * For this game, it will be recorded as:
+    * (row 1) lumber, brick, rock,
+    * (row 2) sheep, lumber, sheep, wheat,
+    * (row 3) rock, sheep, brick, desert, sheep,
+    * (row 4)	wheat, lumber, brick, rock,
+    * (row 5) lumber, wheat, wheat
+
+
+3. Columns U:AC will be the ports, which should be recorded clockwise, starting from the port attached to the first resource tile. Note that a general port (3 for 1 port) should be recorded as a desert port.
+  * For this game, it will be recorded as: rock, desert, desert, wheat, lumber, desert, desert, sheep, brick
+
+
+4. In the game of Catan, the rules actually specified how the dice numbers should be setup. The only randomization is which corner tile will get the first sequence of the dice number, and which direction (clockwise or counter-clockwise) the numbers should be assigned.
 
 ## Ranking Players' Initial Settlements
 
