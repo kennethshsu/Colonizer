@@ -9,10 +9,18 @@ This app is built in Python and uses [tkinter](https://docs.python.org/3/library
 
 ## Loading a Specific Game
 
-Games should be loaded using the GameBoards.xlsx file.
-1. Each individual game board should be recorded as a row
-2. Game resource tiles should be recorded, from left to right, row by row. For example, the game below will be recorded as (row 1) Wood, Brick, Rock, (row 2) Sheep, Wood, Sheep, Wheat...
-3.
+Games should be loaded using the GameBoards.xlsx file, 1 game per row.
+
+For example, if we are trying to load the below game as game 1:
+![GitHub Logo](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Setup%20Example.png)
+Format: ![Alt Text](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Setup%20Example.png)
+
+![alt text](http://url/to/img.png)
+
+1. In the GameBoards file, we will put 1 in column A
+2. Columns B:T will be the resource tiles
+3. Game resource tiles should be recorded, from left to right, row by row. For example, the game below will be recorded as (row 1) Lumber, Brick, Rock, (row 2) Sheep, Wood, Sheep, Wheat...
+4.
 
 ## Ranking Players' Initial Settlements
 
