@@ -33,7 +33,18 @@ For example, if we are trying to load this game as game 1:
   * For this game, it will be recorded as: rock, desert, desert, wheat, lumber, desert, desert, sheep, brick
 
 
-4. In the game of Catan, the rules actually specified how the dice numbers should be setup. The only randomization is which corner tile will get the first sequence of the dice number, and which direction (clockwise or counter-clockwise) the numbers should be assigned.
+4. In the game of Catan, the rules actually specified how the dice numbers should be assigned. The dice sequence is [5, 2, 6, 3, 8, 10, 9, 12, 11, 4, 8, 10, 9, 4, 5, 6, 3, 11]. The sequence will be assigned starting from a randomly chosen corner resource tile, and assigned in either direction (clockwise or counter-clockwise).
+  * First, look at where the 5 is, it will be one of the 6 corners, unless the first tile is a desert, then look for the 5 next to the desert. Going clockwise, the 5" Starting Location Offset will be either 0, 2, 4, 6, 8, or 10.
+    * For this game, the first "5" dice sequent begins at position 0, we will record 0 in column AD
+  * Next, look at where the 2 next to the 5, unless it is a desert, then go to the next tile. Which direction does the 2 follow the 5? It will be either clockwise or counter-clockwise.
+    * For this game, it's counter-clockwise, so we will record False for ClockwiseDice in column AE.
+
+
+5. The dice assignment is automatic.
+6. Update the gameID in ```ColonizerMain.py``` to the game that we want to study.
+6. If everything is setup correctly, you should get the following board.
+
+![_](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Setup%20Loaded%20Board.png)
 
 ## Ranking Players' Initial Settlements
 
