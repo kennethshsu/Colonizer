@@ -11,7 +11,7 @@ This app is built in Python and uses [tkinter](https://docs.python.org/3/library
 
 Games should be loaded using the GameBoards.xlsx file, 1 game per row.
 
-For example, if we are trying to load this game as game 1:
+For example, if we are trying to load this game that I actually played on [Colonist](https://colonist.io) as game 1 :
 
 ![_](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Setup%20Example.png)
 
@@ -40,7 +40,7 @@ For example, if we are trying to load this game as game 1:
       * For this game, it's counter-clockwise, so we will record False for ClockwiseDice in column AE.
 
 
-5. The dice assignment is automatic.
+5. Colonizer will check to make sure the board is a valid board (having the correct number of tiles, etc). And the dice number will be automatically assigned based on the initial position and the direction.
 6. Update the gameID in ```ColonizerMain.py``` to the game that we want to study. Or set it as 0 and then latest game will be choosen instead.
 6. If everything is setup correctly, you should get the following board.
 
