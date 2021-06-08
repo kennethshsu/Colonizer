@@ -153,8 +153,7 @@ def ToggleDebugMode():
         for index, row in buildingLocation.iterrows():
             colonizer.canvas.itemconfig(
                 buildingLocation.at[index, "buildingTextObj"],
-                # text="{0:0.2f}".format(buildingLocation.at[index, "LocValue"] * 10),
-                text=""
+                text="{0:0.2f}".format(buildingLocation.at[index, "LocValue"] * 10),
             )
             colonizer.canvas.itemconfig(
                 buildingLocation.at[index, "buildingShapeObj"],
@@ -179,9 +178,10 @@ def EvaluatePlayerRank(*args):
     playerRank = pd.DataFrame({"playerID": [0, 1, 2, 3, 4]})
 
     for resourceType in ["lumber", "brick", "sheep", "wheat", "rock"]:
-        playerRank[resourceType + "Prod"] = playerStats[
+        resourceProd = playerStats[
             (playerStats["playerID"] != 0) & (playerStats["inPlay"])
         ][resourceType + "Prod"]
+        playerRank[resourceType + "Prod"] = resourceProd
 
     playerRank["totalProd"] = playerStats[
         (playerStats["playerID"] != 0) & (playerStats["inPlay"])
@@ -286,7 +286,12 @@ def EvaluatePlayerRank(*args):
 
     # Print rankings
     playerRank["rank"] = playerRank["score"].rank(ascending=False)
+
+    # print("===== playerRank =====")
     # print(playerRank)
+
+    # print("===== playerStats =====")
+    # print(playerStats)
 
     for playerID in [1, 2, 3, 4]:
         if playerStats.loc[playerID, "inPlay"]:
@@ -1400,6 +1405,8 @@ def UpdatePlayerStats():
                     ),
                 )
 
+            playerStats.loc[playerID, "totalProd"] = playerTotalEconProd
+
             # print player's total resources
             colonizer.canvas.itemconfig(
                 playerStats.loc[playerID, "resourceTotalObj"],
@@ -1481,6 +1488,7 @@ def DevCardUsed(playerID, itemType):
 
 def PurchaseItem(playerID, purchaseItem):
     print("player", playerID, "buys", purchaseItem)
+
     # resolve develpoment card purchase right away
     if purchaseItem == "Dev_Card":
         playerStats.loc[playerID, "acquiredDevCardTotal"] += 1
@@ -1508,8 +1516,6 @@ def SetupPlayerStatsTracker():
             xBoardCenter + (radius + gapSize) * 7,
             gameWindowHeight / 5 * playerID + 3,
         ]
-
-
 
 
     def SetupCardButton(playerID, itemType, isResource):
