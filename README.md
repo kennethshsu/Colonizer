@@ -13,7 +13,7 @@ Games should be loaded using the GameBoards.xlsx file, 1 game per row.
 
 For example, if we are trying to load this specific game (that I actually played played on [Colonist](https://colonist.io)) as game 1 :
 
-![.](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Setup%20Example.png)
+![.](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Board%20Sample.png)
 
 
 1. In the GameBoards file, column A will be the (sequential) ID of the games that we can load.
@@ -51,10 +51,15 @@ For example, if we are trying to load this specific game (that I actually played
   * For this game, it'll be 1.
 6. If everything is setup correctly, you should get the following board.
 
-![.](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Setup%20Loaded%20Board.png)
+![.](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Loaded%20Board.png)
 
 ## Ranking Players' Initial Settlements
+
 We can compare how well each player setup their initial settlements using a few different methods to evaluate their performance.
+
+Let's supposed that the players placed their initial settlements like this:
+![.](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Initial%20Settlements%20Placed.png)
+
 
 | Methodology                                           | Assumption                                                                                                                                                                                                                                                                                                                               | Sample Calculation for Orange                                                                                                                                                                                                                                                                             | Orange's Rank (and Score) | Black's Rank (and Score) | Blue's Rank (and Score) | Red's Rank (and Score) |
 | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------------------------ | ----------------------- | ---------------------- |
