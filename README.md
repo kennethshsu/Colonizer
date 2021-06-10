@@ -85,7 +85,7 @@ Methodologies:
       * Total rock production of 0.1389
       * Mean of production = 0.1167
       * SD of production = 0.0733
-      * Sharpe ratio = 0.1167 / 0.0733 = 1.592
+      * Sharpe ratio (score) = 0.1167 / 0.0733 = 1.592
 
     | Orange's Rank (and Score) | Black's Rank (and Score) | Blue's Rank (and Score) | Red's Rank (and Score) |
     | ------------------------- | ------------------------ | ----------------------- | ---------------------- |
