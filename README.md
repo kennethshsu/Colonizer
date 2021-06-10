@@ -84,12 +84,12 @@ Methodologies:
       * Total wheat production of 0.0556
       * Total rock production of 0.1389
       * Mean of production = 0.1167
-      * SD of production = 0.0733
+      * Standard deviation of production = 0.0733
       * Sharpe ratio (score) = 0.1167 / 0.0733 = 1.592
 
-    | Orange's Rank (and Score) | Black's Rank (and Score) | Blue's Rank (and Score) | Red's Rank (and Score) |
-    | ------------------------- | ------------------------ | ----------------------- | ---------------------- |
-    | 2 (1.592)                 | 1 (2.654)                | 4 (1.440)               | 3 (1.534)              |
+  | Orange's Rank (and Score) | Black's Rank (and Score) | Blue's Rank (and Score) | Red's Rank (and Score) |
+  | ------------------------- | ------------------------ | ----------------------- | ---------------------- |
+  | 2 (1.592)                 | 1 (2.654)                | 4 (1.440)               | 3 (1.534)              |
 
   * Getting the Most Rare Resources by Tiles Available: Players are ranked by their resource production ability; but resource values are weighted depending on how many resource tiles are available. For example, because there are always 4 lumber tiles available, but only 3 brick tiles, 4 lumbers are worth the same as 3 bricks.
 
