@@ -58,16 +58,45 @@ For example, if we are trying to load this specific game (that I actually played
 We can compare how well each player setup their initial settlements using a few different methods to evaluate their performance.
 
 Let's supposed that the players placed their initial settlements like this:
+
 ![.](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Initial%20Settlements%20Placed.png)
 
+Methodologies:
+  * Getting the Most Resources: Players are ranked by their total resource production ability.
+    * Sample calculation for Orange:
+      * 10 brick has probability of 0.0833
+      * 8 rock has probability of 0.1389
+      * 3 sheep has probability of 0.0556
+      * 3 wheat has probability of 0.0556
+      * 5 lumber has probability of 0.1111
+      * 8 lumber has probability of 0.1389
+      * Total probability (score) = 0.583
 
-| Methodology                                           | Assumption                                                                                                                                                                                                                                                                                                                               | Sample Calculation for Orange                                                                                                                                                                                                                                                                             | Orange's Rank (and Score) | Black's Rank (and Score) | Blue's Rank (and Score) | Red's Rank (and Score) |
-| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------------------------ | ----------------------- | ---------------------- |
-| Getting the Most Resources                            | Players are ranked by their total resource production ability.                                                                                                                                                                                                                                                                           | 10 brick has probability of 0.0833<br>8 rock has probability of 0.1389<br>3 sheep has probability of 0.0556<br>3 wheat has probability of 0.0556<br>5 lumber has probability of 0.1111<br>8 lumber has probability of 0.1389<br>Total probability (score) = 0.583                                         | 1 (0.583)                 | 4 (0.500)                | 3 (0.528)               | 2 (0.556)              |
-| Getting the Most & Diverse Resources (Sharpe Ratio)   | Players are ranked by their total resource production ability, divided by the standard deviation between their resource productions.                                                                                                                                                                                                     | Total lumber production of 0.1111 + 0.1389 = 0.2500<br>Total brick production of 0.08333<br>Total sheep production of 0.0556<br>Total wheat production of 0.0556<br>Total rock production of 0.1389<br>Mean of production = 0.1167<br>SD of production = 0.0733<br>Sharpe ratio = 0.1167 / 0.0733 = 1.592 | 2 (1.592)                 | 1 (2.654)                | 4 (1.440)               | 3 (1.534)              |
-| Getting the Most Rare Resources by Tiles Available    | Players are ranked by their resource production ability; but resource values are weighted depending on how many resource tiles are available. For example, because there are always 4 lumber tiles available, but only 3 brick tiles, 4 lumbers are worth the same as 3 bricks.                                                          |                                                                                                                                                                                                                                                                                                           |                           |                          |                         |                        |
-| Getting the Most Rare Resources by Tiles' Probability | Players are ranked by their resource production ability; but resource values are weighted depending on how the board is set up randomly. For example, if there are less rock tiles available, like the example game above, then rocks are worth more.                                                                                    |                                                                                                                                                                                                                                                                                                           |                           |                          |                         |                        |
-| Getting the Most Rarely Produced Resources            | Players are ranked by their resource production ability; but resource values are weighted depending on what resources are occupied by all players. For example, if rocks are rare (like the example game), but still occupied more than another resource (even after taking probability into account), rock's value will be driven down. |                                                                                                                                                                                                                                                                                                           |                           |                          |                         |                        |
+  | Orange's Rank (and Score) | Black's Rank (and Score) | Blue's Rank (and Score) | Red's Rank (and Score) |
+  | ------------------------- | ------------------------ | ----------------------- | ---------------------- |
+  | 1 (0.583)                 | 4 (0.500)                | 3 (0.528)               | 2 (0.556)              |
+
+  * Getting the Most & Diverse Resources (Sharpe Ratio): Players are ranked by their total resource production ability, divided by the standard deviation between their resource productions.
+    * Sample calculation for Orange:
+      * Total lumber production of 0.1111 + 0.1389 = 0.2500
+      * Total brick production of 0.08333
+      * Total sheep production of 0.0556
+      * Total wheat production of 0.0556
+      * Total rock production of 0.1389
+      * Mean of production = 0.1167
+      * SD of production = 0.0733
+      * Sharpe ratio = 0.1167 / 0.0733 = 1.592
+
+    | Orange's Rank (and Score) | Black's Rank (and Score) | Blue's Rank (and Score) | Red's Rank (and Score) |
+    | ------------------------- | ------------------------ | ----------------------- | ---------------------- |
+    | 2 (1.592)                 | 1 (2.654)                | 4 (1.440)               | 3 (1.534)              |
+
+  * Getting the Most Rare Resources by Tiles Available: Players are ranked by their resource production ability; but resource values are weighted depending on how many resource tiles are available. For example, because there are always 4 lumber tiles available, but only 3 brick tiles, 4 lumbers are worth the same as 3 bricks.
+
+  * Getting the Most Rare Resources by Tiles' Probability: Players are ranked by their resource production ability; but resource values are weighted depending on how the board is set up randomly. For example, if there are less rock tiles available, like the example game above, then rocks are worth more.
+
+  * Getting the Most Rarely Produced Resources: Players are ranked by their resource production ability; but resource values are weighted depending on what resources are occupied by all players. For example, if rocks are rare (like the example game), but still occupied more than another resource (even after taking probability into account), rock's value will be driven down.
+
 
 ## App Usage
 
