@@ -109,15 +109,15 @@ Methodologies:
     | **1 (0.592)**                 | 4 (0.508)                | 3 (0.542)               | 2 (0.542)              |
 
   * **Getting the Most Rare Resources by Tiles' Probability**: Players are ranked by their resource production ability; but resource values are weighted depending on how the board is set up randomly. For example, if there are less rock tiles available, like the example game above, then rocks are worth more. Here is a sample calculation for Orange:
-    * We need to calculate how scarce each resource:
+    * We need to calculate how scarce each resource is:
       * The scarcity of lumber is 0.1111 + 0.1111 + 0.1111 + 0.1389 = 0.4722
         * The 4 values are the probability of each lumber tile, which are 5 (11.11%), 9 (11.11%), 5 (11.11%), and 8 (8.33%)
       * The scarcity of brick is 0.0833 + 0.0556 + 0.1389 = 0.2778
       * The scarcity of sheep is 0.0278 + 0.0556 + 0.0833 + 0.0556 = 0.2222
       * The scarcity of wheat is 0.0833 + 0.0556 + 0.0833 + 0.1111 = 0.3333
       * The scarcity of rock is 0.1389 + 0.1389 + 0.0278 = 0.3056
-    * Calculate the total value of resources, which will always be 0.3222
-      * (0.4722 + 0.2778 + 0.2222 + 0.3333 + 0.3056)/5 (rounds to) = 0.3222
+    * Calculate the average value of resources, which will always be 0.3222
+      * (0.4722 + 0.2778 + 0.2222 + 0.3333 + 0.3056)/5 = 0.3222
     * We calculate the relative value of each resource:
       * The relative lumber value is 0.3222/0.4722
       * The relative brick value is 0.3222/0.2778
@@ -137,6 +137,28 @@ Methodologies:
   | 2 (0.548)                 | 3 (0.542)                | 4 (0.475)               | **1 (0.554)**              |
 
   * **Getting the Most Rarely Produced Resources**: Players are ranked by their resource production ability; but resource values are weighted depending on what resources are occupied by all players. For example, if rocks are rare (like the example game), but still occupied more than another resource (even after taking probability into account), rock's value will be driven down.
+    * We need to calculate how scarce each resource is based on what all players produce in the economy:
+      * The scarcity of lumber is 3 * 0.1111 + 1 * 0.1389 + 3 * 0.1111 = 0.8056
+        * The value is calculated because there are 3 settlements on 5 lumber, 1 settlement on 8 lumber, and 3 settlements on 9 lumber
+      * The scarcity of brick is 0.3889
+      * The scarcity of sheep is 0.3056
+      * The scarcity of wheat is 0.2778
+      * The scarcity of rock is 0.4167
+    * Calculate the average value of resources
+      * (0.8056 + 0.3889 + 0.3056 + 0.2778 + 0.4167)/5 = 0.4389
+    * We calculate the relative value of each resource:
+      * The relative lumber value is 0.4389/0.8056
+      * The relative brick value is 0.4389/0.3889
+      * The relative sheep value is 0.4389/0.3056
+      * The relative wheat value is 0.4389/0.2778
+      * The relative rock value is 0.4389/0.4167
+    * Lastly, for Orange:
+      * Total lumber production of (0.1111 + 0.1389) * 0.4389/0.8056 = 0.1362
+      * Total brick production of 0.0833 * 0.4389/0.3889 = 0.0940
+      * Total sheep production of 0.0556 * 0.4389/0.3056 = 0.0798
+      * Total wheat production of 0.0556 * 0.4389/0.2778 = 0.0878
+      * Total rock production of 0.1389 * 0.4389/0.4167 = 0.1463
+      * Total production score = 0.1362 + 0.0940 + 0.0798 + 0.0878 + 0.1463 = 0.544
 
   | Orange's Rank (and Score) | Black's Rank (and Score) | Blue's Rank (and Score) | Red's Rank (and Score) |
   | ------------------------- | ------------------------ | ----------------------- | ---------------------- |
