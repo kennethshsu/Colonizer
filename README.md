@@ -98,7 +98,7 @@ Methodologies:
       * The relative wheat value is 3.6/4
       * The relative rock value is 3.6/3
     * Total lumber production of (0.1111 + 0.1389) * 3.6/4 = 0.2250
-    * Total brick production of 0.08333 * 3.6/3 = 0.1000
+    * Total brick production of 0.0833 * 3.6/3 = 0.1000
     * Total sheep production of 0.0556 * 3.6/4 = 0.0500
     * Total wheat production of 0.0556 * 3.6/4 = 0.0500
     * Total rock production of 0.1389 * 3.6/3 = 0.1667
@@ -108,7 +108,29 @@ Methodologies:
     | ------------------------- | ------------------------ | ----------------------- | ---------------------- |
     | **1 (0.592)**                 | 4 (0.508)                | 3 (0.542)               | 2 (0.542)              |
 
-  * **Getting the Most Rare Resources by Tiles' Probability**: Players are ranked by their resource production ability; but resource values are weighted depending on how the board is set up randomly. For example, if there are less rock tiles available, like the example game above, then rocks are worth more.
+  * **Getting the Most Rare Resources by Tiles' Probability**: Players are ranked by their resource production ability; but resource values are weighted depending on how the board is set up randomly. For example, if there are less rock tiles available, like the example game above, then rocks are worth more. Here is a sample calculation for Orange:
+    * We need to calculate how scarce each resource:
+      * The scarcity of lumber is 0.1111 + 0.1111 + 0.1111 + 0.1389 = 0.4722
+        * The 4 values are the probability of each lumber tile, which are 5 (11.11%), 9 (11.11%), 5 (11.11%), and 8 (8.33%)
+      * The scarcity of brick is 0.0833 + 0.0556 + 0.1389 = 0.2778
+      * The scarcity of sheep is 0.0278 + 0.0556 + 0.0833 + 0.0556 = 0.2222
+      * The scarcity of wheat is 0.0833 + 0.0556 + 0.0833 + 0.1111 = 0.3333
+      * The scarcity of rock is 0.1389 + 0.1389 + 0.0278 = 0.3056
+    * Calculate the total value of resources, which will always be 0.3222
+      * (0.4722 + 0.2778 + 0.2222 + 0.3333 + 0.3056)/5 (rounds to) = 0.3222
+    * We calculate the relative value of each resource:
+      * The relative lumber value is 0.3222/0.4722
+      * The relative brick value is 0.3222/0.2778
+      * The relative sheep value is 0.3222/0.2222
+      * The relative wheat value is 0.3222/0.3333
+      * The relative rock value is 0.3222/0.3056
+    * Lastly, for Orange:
+      * Total lumber production of (0.1111 + 0.1389) * 0.3222/0.4722 = 0.1706
+      * Total brick production of 0.0833 * 0.3222/0.2778 = 0.0967
+      * Total sheep production of 0.0556 * 0.3222/0.2222 = 0.0806
+      * Total wheat production of 0.0556 * 0.3222/0.3333 = 0.0537
+      * Total rock production of 0.1389 * 0.3222/0.3056 = 0.1465
+      * Total production score = 0.1706 + 0.0967 + 0.0806 + 0.0537 + 0.1465 = 0.548
 
   | Orange's Rank (and Score) | Black's Rank (and Score) | Blue's Rank (and Score) | Red's Rank (and Score) |
   | ------------------------- | ------------------------ | ----------------------- | ---------------------- |
