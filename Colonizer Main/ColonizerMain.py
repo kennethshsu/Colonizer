@@ -153,7 +153,8 @@ def ToggleDebugMode():
         for index, row in buildingLocation.iterrows():
             colonizer.canvas.itemconfig(
                 buildingLocation.at[index, "buildingTextObj"],
-                text="{0:0.2f}".format(buildingLocation.at[index, "LocValue"] * 10),
+                # text="{0:0.2f}".format(buildingLocation.at[index, "LocValue"] * 10),
+                text = ""
             )
             colonizer.canvas.itemconfig(
                 buildingLocation.at[index, "buildingShapeObj"],
