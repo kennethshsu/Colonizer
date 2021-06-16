@@ -170,22 +170,27 @@ Some functionalities are already built in the tool, with many more to be expande
 
 ![.](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Full%20App.png)
 
-  * **Debug Mode**: Very useful when some formulas aren't working as expected, shows the coordinates for each of the hex tiles, building number, and road number.
-  * **Dice Stats**: Dice rolls can be tracked, and compared against the empirical distribution to see if the specific roll is "hot" or "cold".
+  * **Debug Mode**: Very useful when some formulas aren't working as expected, shows the coordinates for each of the hex tiles, building number, and road number
+  * **Dice Stats**: Dice rolls can be tracked, and compared against the empirical distribution to see if the specific roll is "hot" or "cold"
   * **Resource Tracking**:
-    * When a dice is rolled, resources are automatically distributed.
-    * When trading occurs, right click to increment a resource for a specific player, and left click to decrement a resource for a specific player.
-  * **Development Cards Tracking**: The functionality is not yet robust, but there is basic framework to setup how many cards are bought (and hidden), how many cards are played, and how many cards are known and unplayed (your own cards).
-  * **Building Tracking**: Settlements are represented with a thin ring around the building, and cities are represented with a thick ring around the building.
-  * **Useful Statistics**: There are also some useful statistics built within the app.
+    * When a dice is rolled, resources are automatically distributed
+    * When trading occurs, right click to increment a resource for a specific player, and left click to decrement a resource for a specific player
+  * **Development Cards Tracking**: The functionality is not yet robust, but there is basic framework to setup how many cards are bought (and hidden), how many cards are played, and how many cards are known and unplayed (your own cards)
+  * **Building Tracking**: Settlements are represented with a thin ring around the building, and cities are represented with a thick ring around the building
+  * **Useful Statistics**: There are also some useful statistics built within the app
     * Resources: from Resource Tracking
     * Development Cards Tracking* from Development Cards Tracking
     * Dice rolls: from Dice stats
-    * Building location value: taking into consideration of how the board is setup to calculate how much each building location is worth.
+    * Economic power: based on resource production, the bank's economic power is the total resource production power summed over all players
+    * Building location value: taking into consideration of how the board is setup to calculate how much each building location is worth
 
 ## Ways to Win Analysis
 
 ## Future Development
+
+Clearly, there is a lot to expand, with many directions to focus on, but for now, there is now a basic framework that is easy to work with.
+
+Pull requests are very welcomed. Feel free to improve any part of the code, and make this a learning experience for everyone interested in getting involved.
 
 ## Feedback & Contribution
 
