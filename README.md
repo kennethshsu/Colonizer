@@ -171,6 +171,9 @@ Some functionalities are already built in the tool, with many more to be expande
 ![.](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Full%20App.png)
 
   * **Debug Mode**: Very useful when some formulas aren't working as expected, shows the coordinates for each of the hex tiles, building number, and road number
+
+![.](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Debug%20Mode.png)
+
   * **Dice Stats**: Dice rolls can be tracked, and compared against the empirical distribution to see if the specific roll is "hot" or "cold"
   * **Resource Tracking**:
     * When a dice is rolled, resources are automatically distributed
