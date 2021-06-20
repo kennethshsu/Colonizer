@@ -189,6 +189,16 @@ Some functionalities are already built in the tool, with many more to be expande
 
 ## Ways to Win Analysis
 
+In Catan, the most important goal is to win. In fact, it does not matter how you win, such as how many resources you need or how many turns it takes for one player to win. As long as the player is the first agent to get 10 victory points (or more), a winner is declared.
+
+In a side analysis, ```WaysToWin.py``` explores all the pathways to victory that a player can take to achieve this and becomes the winner. This is actually combinatorial optimization problem, or the [Knapsack problem](https://en.wikipedia.org/wiki/Knapsack_problem), where a player needs to "fill their bags" with a combination of "items" that are worth points.
+
+There are in fact, 142 total ways to win the game (142 different game end result for a player to win). Some are trivial, some are very specific scenarios where it is not at all likely to achieve in a real game.
+
+![.](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Ways%20to%20Win.png)
+
+The result of this analysis is not yet considered in the main Colonizer app. However, it is the first step that I have taken to understand how to win a game in Catan. We can further consider expand the result of this analysis, such as the probability of drawing development cards, or how some pathways are known to be impossible since the beginning of the game.
+
 ## Future Development
 
 Clearly, there is a lot to expand, with many directions to focus on, but for now, there is now a basic framework that is easy to work with.
