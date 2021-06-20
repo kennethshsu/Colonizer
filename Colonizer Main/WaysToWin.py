@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
-import matplotlib.patches as mpatches
 pd.set_option("display.max_rows", 20, "display.max_columns", 20)
 
 #%%
