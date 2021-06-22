@@ -169,7 +169,7 @@ plt.bar(np.arange(scenarioNum), allWinScenario['MinSheep'], color = '#9CBD29', b
 plt.bar(np.arange(scenarioNum), allWinScenario['MinWheat'], color = '#F2BA24', bottom = allWinScenario['MinWood'] + allWinScenario['MinBrick'] + allWinScenario['MinSheep'])
 plt.bar(np.arange(scenarioNum), allWinScenario['MinRock'], color = '#9FA5A1', bottom = allWinScenario['MinWood'] + allWinScenario['MinBrick'] + allWinScenario['MinSheep'] + allWinScenario['MinWheat'])
 plt.ylabel("Number of Total Resource Needed for the Scenario")
-plt.xlabel("Scenario (Sorted by the Number of Resource Needed")
+plt.xlabel("Scenario (Sorted by the Number of Resource Needed)")
 
 colors = {
     'Rock': '#9FA5A1',
