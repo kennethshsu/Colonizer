@@ -11,7 +11,7 @@ This app is built in Python and uses [tkinter](https://docs.python.org/3/library
 
 Games should be loaded using the GameBoards.xlsx file, 1 game per row.
 
-For example, if we are trying to load this specific game (that I actually played played on [Colonist](https://colonist.io)) as game 1 :
+For example, if we are trying to load this specific game (that I actually played on [Colonist](https://colonist.io)) as game 1 :
 
 ![.](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Board%20Sample.png)
 
@@ -29,13 +29,13 @@ For example, if we are trying to load this specific game (that I actually played
       * (row 5) lumber, wheat, wheat
 
 
-3. Columns U:AC will be for the ports, which should be recorded clockwise, starting from the port attached to the first resource tile at the upper left corner. Note that general ports (3 for 1 ports) should be recorded as desert ports.
+3. Columns U:AC will be for the ports, which should be recorded clockwise, starting from the port attached to the first resource tile in the upper left corner. Note that general ports (3 for 1 ports) should be recorded as desert ports.
     * For this game, it will be recorded as: rock, desert, desert, wheat, lumber, desert, desert, sheep, brick
 
 
 4. In the game of Catan, the rules actually specified how the dice numbers should be assigned. The sequence is [5, 2, 6, 3, 8, 10, 9, 12, 11, 4, 8, 10, 9, 4, 5, 6, 3, 11], and needs to be assigned starting from a randomly chosen cornered resource tile, and assigned in either direction (clockwise or counter-clockwise), from the outer-most ring to the most central resource hex.
     * First, look at where the 5 is, it will be on one of the 6 corner hex tiles, unless the first tile is a desert, then look for a 5 next to the desert. Going clockwise, the "5" Starting Location Offset will be either 0, 2, 4, 6, 8, or 10.
-      * For this game, the first 5 dice sequent begins at position 0, we will record 0 in column AD
+      * For this game, the first 5 dice sequence begins at position 0, we will record 0 in column AD
       * Just for reference:
         * Offset of 2 is currently taken by rock 8
         * Offset of 4 is currently taken by sheep 11
@@ -47,9 +47,9 @@ For example, if we are trying to load this specific game (that I actually played
 
 
 5. Colonizer will check to make sure the board is a valid board (having the correct number of tiles, etc). And the dice number will be automatically assigned based on the initial position and the direction of assignment.
-6. Update the gameID in ```ColonizerMain.py``` to the game that we want to study. Or set it as 0 and then latest game will be choosen instead.
+6. Update the gameID in ```ColonizerMain.py``` to the game that we want to study. Or set it as 0 and then latest game will be chosen instead.
   * For this game, it'll be 1.
-6. If everything is setup correctly, you should get the following board.
+6. If everything is set up correctly, you should get the following board.
 
 ![.](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Loaded%20Board.png)
 
@@ -176,28 +176,28 @@ Some functionalities are already built in the tool, with many more to be expande
 
   * **Dice Stats**: Dice rolls can be tracked, and compared against the empirical distribution to see if the specific roll is "hot" or "cold"
   * **Resource Tracking**:
-    * When a dice is rolled, resources are automatically distributed
+    * When the dice is rolled, resources are automatically distributed
     * When trading occurs, right click to increment a resource for a specific player, and left click to decrement a resource for a specific player
-  * **Development Cards Tracking**: The functionality is not yet robust, but there is basic framework to setup how many cards are bought (and hidden), how many cards are played, and how many cards are known and unplayed (your own cards)
+  * **Development Cards Tracking**: The functionality is not yet robust, but there is basic framework to set up how many cards are bought (and hidden), how many cards are played, and how many cards are known and unplayed (your own cards)
   * **Building Tracking**: Settlements are represented with a thin ring around the building, and cities are represented with a thick ring around the building
   * **Useful Statistics**: There are also some useful statistics built within the app
     * Resources: from Resource Tracking
     * Development Cards Tracking* from Development Cards Tracking
     * Dice rolls: from Dice stats
     * Economic power: based on resource production, the bank's economic power is the total resource production power summed over all players
-    * Building location value: taking into consideration of how the board is setup to calculate how much each building location is worth
+    * Building location value: taking into consideration of how the board is set up to calculate how much each building location is worth
 
 ## Ways to Win Analysis
 
 In Catan, the most important goal is to win. In fact, it does not matter how you win, such as how many resources you need or how many turns it takes for one player to win. As long as the player is the first agent to get 10 victory points (or more), a winner is declared.
 
-In a side analysis, ```WaysToWin.py``` explores all the pathways to victory that a player can take to achieve this and becomes the winner. This is actually combinatorial optimization problem, or the [Knapsack problem](https://en.wikipedia.org/wiki/Knapsack_problem), where a player needs to "fill their bags" with a combination of "items" that are worth points.
+In a side analysis, ```WaysToWin.py``` explores all the pathways to victory that a player can take to achieve this and becomes the winner. This is actually a combinatorial optimization problem, or the [Knapsack problem](https://en.wikipedia.org/wiki/Knapsack_problem), where a player needs to "fill their bags" with a combination of "items" that are worth points.
 
-There are in fact, 142 total ways to win the game (142 different game end result for a player to win). Some are trivial, some are very specific scenarios where it is not at all likely to achieve in a real game.
+There are in fact, 142 total ways to win the game (142 different game ends result for a player to win). Some are trivial, some are very specific scenarios where it is not at all likely to achieve in a real game.
 
 ![.](https://github.com/kennethshsu/Colonizer/blob/main/ReadMe%20Support/Ways%20to%20Win.png)
 
-The result of this analysis is not yet considered in the main Colonizer app. However, it is the first step that I have taken to understand how to win a game in Catan. We can further consider expand the result of this analysis, such as the probability of drawing development cards, or how some pathways are known to be impossible since the beginning of the game.
+The result of this analysis is not yet considered in the main Colonizer app. However, it is the first step that I have taken to understand how to win a game in Catan. We can consider further expanding the result of this analysis, such as the probability of drawing development cards, or how some pathways are known to be unachievable at any point of the game.
 
 ## Future Development
 
@@ -207,7 +207,7 @@ Pull requests are very welcomed. Feel free to improve any part of the code, and 
 
 ## Feedback & Contribution
 
-While this is my first major project using Python, I really would appreciate any feedback that you may have. Feedback both good or bad will help me learn and get better.
+While this is my first major project using Python, I really would appreciate any feedback that you may have. Feedback, both good or bad will help me learn and get better.
 
 Contributions are welcome as well. I love cooperating with people and get new ideas!
 
